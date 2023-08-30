@@ -1,7 +1,11 @@
 <?php
 
 use App\Models\Table;
+use App\Models\ElementTable;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\PdfController;
+
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,45 +20,36 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('inicio');
 });
 
 
 Route::get('/inicio', function () {
-   
     $tables = Table::all()->where('status',1);
+    foreach ($tables as $key => $value) {
+        $tables[$key]->status = ElementTable::all()->where('status',1)->where('table_id',$value->id)->isEmpty() ? 'Libre' : 'Ocupada';
+        # code...
+    }
     $tables = json_decode(json_encode($tables->toArray()));
     return view('inicio',['tables' => $tables]);
 });
-
-Route::get('/mesas', function () {
-    $tables = Table::all()->where('status',1);
-    $tables = json_decode(json_encode($tables->toArray()));
-    return $tables;
-});
-
-/*Route::get('/mesa/{id}', function (string $id) {
-    $table = Table::find($id);
-    if($table){
-        $table = json_decode(json_encode($table->toArray()));
-    }else {
-        $table = [];
-        $table['name'] = 'Mesa no existe';
-        $table = json_decode(json_encode($table) );
-    }
-
-
-    return view('mesa',['data' => $table]);
-   
-});
-*/
 
 
 // Rutas para las mesas
 Route::prefix('mesa')->group(function () {
     Route::get('{id}', [TableController::class, 'show'])->name('mesa.show');
+    Route::post('{id}', [TableController::class, 'show'])->name('mesa.store');
+
 });
 
 
 // Ruta para almacenar un producto en una mesa
-Route::post('productos', [ProductoController::class, 'store'])->name('productos.store');
+Route::post('productos', [ProductoController::class, 'storeInTable'])->name('productos.storeInTable');
+Route::get('mesa/{mesa_id}/productos/{id}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
+Route::put('mesa/{mesa_id}/productos/{id}', [ProductoController::class, 'update'])->name('productos.update');
+Route::get('mesa/{mesa_id}/productos/{id}', [ProductoController::class, 'delete'])->name('productos.delete');
+
+//generar pdf preliminar 
+
+Route::get('generar-pdf-pre/{mesa_id}', [PdfController::class, 'generarPdf'])->name('pdf.generar');
+Route::get('visual-pdf-pre/{mesa_id}', [PdfController::class, 'visualPdf'])->name('pdf.visualPdf');

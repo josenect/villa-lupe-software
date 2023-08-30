@@ -18,6 +18,29 @@
             body {
                 font-family: 'Nunito', sans-serif;
             }
+            .btn-like-link {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            text-decoration: none;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .btn-like-link:hover {
+            background-color: #0056b3;
+            color: #fff;
+        }
         </style>
     </head>
     <body class="antialiased">
@@ -31,11 +54,18 @@
                 <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg">
                     <div class="grid grid-cols-1 md:grid-cols-2">
 
-                        @foreach ($tables as $tables)
+                        @foreach ($tables as $table)
 
                         <div class="p-6 border-t border-gray-200 dark:border-gray-700 md:border-l">
-                       <div class=""><p href="https://laravel.com/docs" class=" text-gray-900 dark:text-white">{{ $tables->name }} <br> Ubicacion: {{ $tables->location }} <br> Estado: {{ $tables->status }} </p></div>
-                       <a href="mesa/{{ $tables->id }}" class="ml-1 underline">
+                            <div style="@if($table->status == 'Ocupada') background: darkred;@endif">
+                                <p href="https://laravel.com/docs" class="text-gray-900 dark:text-white">
+                                    {{ $table->name }} <br>
+                                    Ubicacion: {{ $table->location }} <br>
+                                    Estado: {{ $table->status }}
+                                </p>
+                            </div>
+                            
+                       <a href="mesa/{{ $table->id }}" class="ml-1 underline btn-like-link" >
                                 Gestionar mesa
                             </a>
                         </div>
