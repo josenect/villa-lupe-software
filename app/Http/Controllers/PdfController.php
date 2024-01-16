@@ -60,7 +60,7 @@ class PdfController extends Controller
 
     public function visualPdf($mesa_id)
     {
-        {{date_default_timezone_set('America/Bogota'); }}
+        date_default_timezone_set('America/Bogota'); 
         $mesa = Table::findOrFail($mesa_id);
         $productosTable = ElementTable::with('producto')
         ->where('status', 1)

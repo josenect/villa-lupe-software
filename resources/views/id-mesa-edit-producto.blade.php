@@ -422,6 +422,8 @@
         body {
             font-family: 'Nunito', sans-serif;
         }
+
+                /* Estilo para hacer que el enlace se parezca a un botón */
         .btn-like-link {
             display: inline-block;
             padding: 0.375rem 0.75rem;
@@ -441,53 +443,11 @@
             cursor: pointer;
         }
 
-        .btn-like-link-dele {
-            display: inline-block;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-            user-select: none;
-            border: 1px solid transparent;
-            border-radius: 0.25rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            text-decoration: none;
-            background-color: #ff0000;
-            color: #fff;
-            cursor: pointer;
-        }
-        .btn-like-link-dele:hover {
-            background-color: #a12323;
-            color: #fff;
-        }
-
         .btn-like-link:hover {
             background-color: #0056b3;
             color: #fff;
         }
-
-        .btn-like-link-prel {
-            display: inline-block;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-            user-select: none;
-            border: 1px solid transparent;
-            border-radius: 0.25rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            text-decoration: none;
-            background-color: #5ea7d8;
-            color: #fff;
-            cursor: pointer;
-        }
-    </style>
+            </style>
 </head>
 
 <body class="antialiased">
@@ -500,111 +460,46 @@
             </div>
 
             <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg">
-                <div class="grid grid-cols-1 md:grid-cols-2">
+                <div class="grid grid-cols-1 md:grid-cols-2" style="background-color: lightsteelblue;">
                     <div class="container">
                         <div class="card">
+                            <a href="{{ route('mesa.show', ['id' => $mesa->id]) }}" class="btn-like-link">Volver</a>
+
                             <div class="card-body">
                                 <h2>{{ $mesa->name }}</h2>
                                 <p>Ubicacion: {{ $mesa->location }}</p>
                                 <p>Estado: {{ $mesa->status }}</p>
-                                <a href="/inicio" class="btn-like-link">Volver</a>
-
-
-                                <a target="_black"  href="/visual-pdf-pre/{{ $mesa->id }}" class="btn-like-link-prel">Factura Preliminar</a>
-
-                                <!-- Mostrar más detalles de la mesa aquí -->
                                 @if(session('success'))
                                 <div class="alert alert-success">
                                     {{ session('success') }}
                                 </div>
                             @endif
-                                <h3>Productos en la Mesa</h3>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Nombre</th>
-                                            <th>Cantidad</th>
-                                            <th>Precio</th>
-                                            <th>Descuento Producto</th>
+                                <!-- Mostrar más detalles de la mesa aquí -->
+                                <div class="container">
+                                    <h2>Editar Producto en Mesa {{ $mesa->nombre }}</h2>
+                                    <form action="{{ route('update.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="form-group">
+                                            <label for="producto_id">Seleccionar Producto:</label>
+                                            <select name="producto_id" id="producto_id" class="form-control">
+                                                @foreach ($productos as $p)
+                                                    <option value="{{ $p->id }}" {{ $p->id === $producto->producto_id ? 'selected' : '' }}>{{ $p->name }} - {{ number_format($p->price, 2, ',', '.') }}</option>
+                                                @endforeach
+                                            </select>
 
-                                            <th>Sub Total</th>
-
-                                            <th>Descuento</th>
-
-                                            <th>Total</th>
-                                            <th>Fecha de registro</th>
-                                            <th>Acciones</th>
-                                            <th>Acciones</th>
-
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($productosTable as $producto)
-                                            <tr>
-                                                <td>{{ $producto->producto->name }}</td>
-                                                <td>{{ $producto->amount }}</td>
-                                                <td>{{ number_format($producto->price , 0, ',', '.') }}</td>
-                                                <td>{{ number_format($producto->dicount, 0, ',', '.') }}</td>
-
-                                                <td>{{ number_format(($producto->price) * $producto->amount, 0, ',', '.') }}</td>
-                                                <td>{{ number_format($producto->dicount * $producto->amount, 0, ',', '.') }}</td>
-                                                <td>{{ number_format(($producto->price - $producto->dicount) * $producto->amount, 0, ',', '.') }}</td>
-                                                <td>{{ date('Y-m-d g:i A', strtotime($producto->record)) }}</td>
-
-
-                                                <td>
-                                                    <!-- Botón para editar el producto -->
-                                                    <a class="btn-like-link" href="{{ route('productos.edit', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}">Editar</a>
-                                                </td>
-                                                <td>
-                                                    <!-- Botón para editar el producto -->
-                                                <a  class="btn-like-link-dele"  href="{{ route('productos.delete', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}">Eliminar</a>
-                                                    
-                                                </td>
-
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <td colspan="4"></td>
-                                            <td>{{ number_format($subtotal, 0, ',', '.') }}</td>
-                                            <td>{{ number_format($descuentoTotal, 0, ',', '.') }}</td>
-                                            <td>{{ number_format($total, 0, ',', '.') }}</td>
-                                            <td colspan="3"></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                                
-                                <h3>Agregar Producto</h3>
-                                <form action="{{ route('productos.storeInTable') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="mesa_id" value="{{ $mesa->id }}">
-                        
-                                    <div class="form-group">
-                                        <label for="producto">Seleccione un producto</label>
-                                        <select name="product_id" class="form-control">
-                                            <option value="">Seleccionar Producto</option>
-                                            @foreach ($productos as $producto)
-                                                <option value="{{ $producto->id }}">{{ $producto->name }} - {{ number_format($producto->price, 2, ',', '.') }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                        
-                                    <div class="form-group">
-                                        <label for="amount">Cantidad de Productos</label>
-                                        <input type="number" name="amount" class="form-control">
-                                    </div>
-                        
-                                    <div class="form-group">
-                                        <label for="dicount">Descuento en el Producto</label>
-                                        <input type="number" name="dicount" class="form-control">
-                                    </div>
-                                    
-                                    <!-- Agrega más campos para la carga del producto si es necesario -->
-                        
-                                    <button type="submit" class="btn btn-primary">Agregar</button>
-                                </form>
+                                            <div class="form-group">
+                                                <label for="amount">Cantidad de Productos</label>
+                                                <input type="number" name="amount" class="form-control" value="{{ old('amount', $producto->amount) }}">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="dicount">Descuento en el Producto</label>
+                                                <input type="number" name="dicount" class="form-control" value="{{ old('dicount', $producto->dicount) }}">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-like-link">Guardar Cambios</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                         

@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>{{ $mesa->name }}</title>
+    <title>Mesas Villa Lupe</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -422,8 +422,6 @@
         body {
             font-family: 'Nunito', sans-serif;
         }
-
-                /* Estilo para hacer que el enlace se parezca a un botón */
         .btn-like-link {
             display: inline-block;
             padding: 0.375rem 0.75rem;
@@ -443,11 +441,73 @@
             cursor: pointer;
         }
 
+        .btn-like-link-dele {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            text-decoration: none;
+            background-color: #ff0000;
+            color: #fff;
+            cursor: pointer;
+        }
+        .btn-like-link-dele:hover {
+            background-color: #a12323;
+            color: #fff;
+        }
+
         .btn-like-link:hover {
             background-color: #0056b3;
             color: #fff;
         }
-            </style>
+
+        .btn-like-link-prel {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            text-decoration: none;
+            background-color: #5ea7d8;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .btn-gene-factu {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            text-decoration: none;
+            background-color: #d85e5e;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+    </style>
 </head>
 
 <body class="antialiased">
@@ -456,7 +516,7 @@
 
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <div class="flex justify-center pt-8 sm:justify-start sm:pt-0">
-                <h1 class="center underline text-gray-900 dark:text-white">Información de la Mesa</h1>
+                <h1 class="center underline text-gray-900 dark:text-white">Información de las Mesas</h1>
             </div>
 
             <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg">
@@ -464,43 +524,72 @@
                     <div class="container">
                         <div class="card">
                             <div class="card-body">
-                                <h2>{{ $mesa->name }}</h2>
-                                <p>Ubicacion: {{ $mesa->location }}</p>
-                                <p>Estado: {{ $mesa->status }}</p>
+                                <a href="/" class="btn-like-link">Volver</a>
+                                <!-- Mostrar más detalles de la mesa aquí -->
                                 @if(session('success'))
                                 <div class="alert alert-success">
                                     {{ session('success') }}
                                 </div>
                             @endif
-                                <!-- Mostrar más detalles de la mesa aquí -->
-                                <div class="container">
-                                    <h2>Editar Producto en Mesa {{ $mesa->nombre }}</h2>
-                                    <form action="{{ route('productos.update', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <div class="form-group">
-                                            <label for="producto_id">Seleccionar Producto:</label>
-                                            <select name="producto_id" id="producto_id" class="form-control">
-                                                @foreach ($productos as $p)
-                                                    <option value="{{ $p->id }}" {{ $p->id === $producto->producto_id ? 'selected' : '' }}>{{ $p->name }} - {{ number_format($p->price, 2, ',', '.') }}</option>
-                                                @endforeach
-                                            </select>
+                            @if(session('error'))
+                            <div class="alert alert-success">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+                                <h3>Mesas Creadas </h3>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>localización</th>
+                                            <th>status</th>
+                                            <th>Acciones</th>
 
-                                            <div class="form-group">
-                                                <label for="amount">Cantidad de Productos</label>
-                                                <input type="number" name="amount" class="form-control" value="{{ old('amount', $producto->amount) }}">
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="dicount">Descuento en el Producto</label>
-                                                <input type="number" name="dicount" class="form-control" value="{{ old('dicount', $producto->dicount) }}">
-                                            </div>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                                    </form>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($tables as $mesa)
+                                            <tr>
+                                                <td>{{ $mesa->name }}</td>
+                                                <td>{{ $mesa->location }}</td>
+                                                @if($mesa->status == 1)
+                                                <td>Activo</td>
+                                                @else
+                                                <td>Inactivo</td>
+                                                @endif
+                                                <td>
+                                                    <!-- Botón para editar el producto -->
+                                                    <a class="btn-like-link" href="{{ route('admin.mesas.show', ['mesa_id' => $mesa->id]) }}">Editar</a>
+                                                    <a class="btn-like-link-dele" href="{{ route('admin.mesas.delete', ['mesa_id' => $mesa->id]) }}">Eliminar</a>
 
-                                    <a href="{{ route('mesa.show', ['id' => $mesa->id]) }}" class="btn-like-link">Volver</a>
 
-                                </div>
+
+                                                    
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                
+                                <h3>Agregar Mesa</h3>
+                                <form action="{{ route('admin.mesas.storeInTable') }}" method="POST">
+                                    @csrf
+                                    
+                        
+                                    <div class="form-group">
+                                        <label for="name">Nombre Mesa</label>
+                                        <input type="string" name="name" class="form-control">
+                                    </div>
+                        
+                                    <div class="form-group">
+                                        <label for="location">Ubicacion</label>
+                                        <input type="string" name="location" class="form-control">
+                                    </div>
+                                    
+                                    <!-- Agrega más campos para la carga del producto si es necesario -->
+                        
+                                    <button type="submit" class="btn btn-primary">Agregar</button>
+                                </form>
                             </div>
                         </div>
                         
@@ -514,8 +603,25 @@
 
     </div>
     </div>
+
+    <script>
+        document.getElementById('generar-factura-btn').addEventListener('click', function(event) {
+        event.preventDefault();
+        var mesaId = this.getAttribute('data-mesa-id');
+        var propina = prompt('Por favor, ingrese el valor de la propina:',"0");
+        if (propina !== null) {
+        var url = '/generar-factura/' + mesaId + '?propina=' + propina;
+        window.location.href = url;
+        }
+       });
+      </script>
 </body>
 
+
+<!-- Modal para ingresar el valor de la propina -->
+<div class="modal fade" id="propinaModal" tabindex="-1" role="dialog" aria-labelledby="propinaModalLabel" aria-hidden="true">
+    <!-- ... (contenido del modal) ... -->
+  </div>
 </html>
 
 
