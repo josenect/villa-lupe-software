@@ -79,8 +79,8 @@
                     <div class="grid  md:grid-cols-2">
                         @foreach ($tables as $table)
 
-                        <div class="p-6 border-t border-gray-200 dark:border-gray-700 md:border-l">
-                            <div style="@if($table->status == 'Ocupada') background: #c10d0d;@endif">
+                        <div style="@if($table->status == 'Ocupada') background: #f48a8a;@endif" class="p-6 border-t border-gray-200 dark:border-gray-700 md:border-l">
+                            <div >
                                 <p  style="font-weight: bold">
                                     Nombre : {{ $table->name }} <br>
                                     Ubicacion: {{ $table->location }} <br>

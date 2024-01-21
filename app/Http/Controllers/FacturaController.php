@@ -76,7 +76,7 @@ class FacturaController extends Controller
             if(!is_null($ultimaFactura)){
               $numeroFactura  = $ultimaFactura->numero_factura;
             }else{
-                return redirect()->route('mesas')->with('success', 'No Se Puede Generar Facturas y la mesa no tiene una factura antigua');
+                return redirect()->route('inicio')->with('success', 'No Se Puede Generar Facturas y la mesa no tiene una factura antigua');
             }
         }
 
@@ -115,7 +115,7 @@ class FacturaController extends Controller
             return view('pdf.detalle-factura', compact('factura','mesa', 'productosFactura', 'subtotal','descuentoTotal', 'total'))->render();
     
         }
-        return redirect()->route('mesas')->with('success', 'La factura no Existe.');
+        return redirect()->route('inicio')->with('success', 'La factura no Existe.');
 
     }
 
@@ -142,7 +142,13 @@ class FacturaController extends Controller
             # code...
         }
 
-           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos','totalProductos','totalPrecio'))->render();
+        $facturas = Factura::whereDate('created_at', $date)->get();
+        $facturasTotal = 0;
+        foreach ($facturas as $key => $value) {
+            $facturasTotal = $facturasTotal + $value->valor_pagado ;
+        }
+
+           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos','totalProductos','totalPrecio','facturas','facturasTotal'))->render();
    
        }
        return redirect()->route('inicio')->with('success', 'Las facturano no Existe.');

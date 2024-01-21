@@ -4,8 +4,8 @@
     <style>
         /* Definir estilos CSS para el PDF aquí */
         body {
-            font-family: "Courier New", monospace;
-            font-size: 13px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-size: 11px;
 
             
         }
