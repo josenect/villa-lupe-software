@@ -23,7 +23,7 @@
         
         <h1 style="text-align: center; margin-right:0;margin-bottom: 0px;"> VILLA LUPE</h1>
         <p style="text-align: center;margin-top: 0px;margin-bottom: 0px;"> Casa de Campo</p>
-        <h2 style="text-align: center;margin-top: 0px">Total Productos vendidos</h2>
+        <h2 style="text-align: center;margin-top: 0px">Total productos vendidos</h2>
 
         <table>
             <thead>
