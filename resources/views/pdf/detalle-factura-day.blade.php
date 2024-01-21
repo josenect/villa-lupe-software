@@ -46,9 +46,18 @@
                     </tr>
                 @endforeach
                 <tr>
-                    <td colspan="3" style="text-align: right;"></td>
-                </tr>
+                    
+                   
+                        <td colspan="3" style="text-align: right;"><strong>Total Produtos:</strong></td>
+                        <td style="text-align: right;">{{ $totalProductos}}</td>
+                        <!-- Otras celdas en esta fila -->
                 <tr>
+                    <tr>
+                   
+                        <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+                        <td style="text-align: right;">{{ number_format($totalPrecio, 0, ',', '.') }}</td>
+                        <!-- Otras celdas en esta fila -->
+                    </tr>
                 
             </tbody>
             <tfoot>
