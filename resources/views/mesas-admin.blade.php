@@ -520,7 +520,7 @@
             </div>
 
             <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg">
-                <div class="grid grid-cols-1 md:grid-cols-2">
+                <div class="grid grid-cols-1 md:grid-cols-2"style="background-color: lightsteelblue;">
                     <div class="container">
                         <div class="card">
                             <div class="card-body">
@@ -603,18 +603,6 @@
 
     </div>
     </div>
-
-    <script>
-        document.getElementById('generar-factura-btn').addEventListener('click', function(event) {
-        event.preventDefault();
-        var mesaId = this.getAttribute('data-mesa-id');
-        var propina = prompt('Por favor, ingrese el valor de la propina:',"0");
-        if (propina !== null) {
-        var url = '/generar-factura/' + mesaId + '?propina=' + propina;
-        window.location.href = url;
-        }
-       });
-      </script>
 </body>
 
 

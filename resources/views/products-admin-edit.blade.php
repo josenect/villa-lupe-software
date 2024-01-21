@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Mesas Villa Lupe</title>
+    <title>Productos Villa Lupe</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -524,7 +524,7 @@
                     <div class="container">
                         <div class="card">
                             <div class="card-body">
-                                <a href="/" class="btn-like-link">Volver</a>
+                                <a href="/admin/productos" class="btn-like-link">Volver</a>
                                 <!-- Mostrar más detalles de la mesa aquí -->
                                 @if(session('success'))
                                 <div class="alert alert-success">
@@ -536,27 +536,40 @@
                                 {{ session('error') }}
                             </div>
                         @endif
-                                <h3>Actualizar mesa </h3>
+                                <h3>Actualizar producto </h3>
                   
-                                <form action="{{ route('admin.mesas.update',['mesa_id' => $table->id])}}" method="POST">
+                                <form action="{{ route('admin.products.update',['product_id' => $product->id])}}" method="POST">
                                     @csrf
                                     
                                     <div class="form-group">
-                                        <label for="name">Nombre Mesa</label>
-                                        <input type="string" name="name" class="form-control" value="{{  $table->name}}">
+                                        <label for="name">Nombre producto</label>
+                                        <input type="string" name="name" class="form-control" value="{{  $product->name}}">
                                     </div>
-                        
                                     <div class="form-group">
-                                        <label for="location">Ubicacion</label>
-                                        <input type="string" name="location" class="form-control" value="{{  $table->location}}">
+                                        <label for="category">Categoria</label>
+                                        <select name="category" class="form-control" value="{{  $product->category}}">
+                                        <option value="restaurante" {{ $product->category == "restaurante" ? 'selected' : '' }}>Restaurante</option>
+                                        <option value="caseta" {{ $product->category == "caseta" ? 'selected' : '' }} >Caseta</option>
+
+                                    
+                                    </select>
+
+                                    <div class="form-group">
+                                        <label for="price">Precio</label>
+                                        <input type="number" name="price" value="{{  $product->price}}" class="form-control" pattern="[0-9]*" inputmode="numeric">
                                     </div>
+
+                                    <div class="form-group">
+                                        <label for="inventory">Inventario</label>
+                                        <input type="number" name="inventory"  value="{{  $product->inventory}}"  class="form-control" pattern="[0-9]*" inputmode="numeric">
+                                    </div>                                        
+                                
                                     
                                     <div class="form-group">
                                         <label for="status">Estado mesa</label>
-                                        <select name="status" class="form-control" value="{{  $table->status}}">
-                                        <option value="1" {{ $table->status == "1" ? 'selected' : '' }}>Activa</option>
-                                        <option value="0" {{ $table->status == "0" ? 'selected' : '' }} >Inactiva</option>
-
+                                        <select name="status" class="form-control" value="{{  $product->status}}">
+                                        <option value="1" {{ $product->status == "1" ? 'selected' : '' }}>Activa</option>
+                                        <option value="0" {{ $product->status == "0" ? 'selected' : '' }} >Inactiva</option>
                                     
                                     </select>
                                     </div>

@@ -62,8 +62,8 @@
             <div class="max-w-6xl mx-auto sm:px-6 lg:px-8" >
                 <div class="menu">
                     <a href="/admin/mesas">Mesas</a>
-                    <a href="/admin/mesas">Productos</a>
-                    <a href="/facturas">Facturas</a>
+                    <a href="/admin/productos">Productos</a>
+                    <a href="/admin/facturas/{{ date('Y-m-d') }}">Facturas</a>
                     <!-- Agrega más enlaces de menú según sea necesario -->
                 </div>
     

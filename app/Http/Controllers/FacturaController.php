@@ -118,5 +118,39 @@ class FacturaController extends Controller
 
     }
 
+   //visualizar factura
+   public function showFacturaAdmin($date)
+   {
+   
+       date_default_timezone_set('America/Bogota'); 
+
+  
+      
+        $facturas = Factura::whereDate('created_at', $date)->get();
+        $detalleElementos = array();
+        foreach ($facturas as $factura) {
+            // Carga la relación 'detallesFacturas' en cada factura
+            $detallesFacturas = DetalleFactura::where('factura_id', $factura->id)->get();
+            // Accede a los detalles de la factura junto con los nombres de los productos y la cantidad vendida
+            foreach ($detallesFacturas as $detalle) {
+                // Consulta el producto correspondiente a este detalle
+                $producto = Producto::find($detalle->producto_id);
+                $nombreProducto = $producto->name; // Ajusta el nombre del atributo según tu estructura
+                $cantidadVendida = $detalle->amount;
+                $detalleElementos[]= ['name' => $nombreProducto  ,'precio' => $detalle->price, 'cantidad'=> $cantidadVendida , 'total' =>($cantidadVendida * $detalle->price )];
+                // Hacer algo con el nombre del producto y la cantidad vendida
+            }
+        }      
+       if(!empty($detalleElementos )){
+        
+       $detalleElementos  = json_decode(json_encode($detalleElementos ,false));
+
+           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos'))->render();
+   
+       }
+       return redirect()->route('inicio')->with('success', 'Las facturano no Existe.');
+
+   }
+    
     
 }

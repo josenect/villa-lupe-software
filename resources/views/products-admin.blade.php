@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Mesas Villa Lupe</title>
+    <title>Procductos Villa Lupe</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -516,11 +516,11 @@
 
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <div class="flex justify-center pt-8 sm:justify-start sm:pt-0">
-                <h1 class="center underline text-gray-900 dark:text-white">Información de las Mesas</h1>
+                <h1 class="center underline text-gray-900 dark:text-white">Información de Productos</h1>
             </div>
 
             <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg">
-                <div class="grid grid-cols-1 md:grid-cols-2" style="background-color: lightsteelblue;">
+                <div class="grid grid-cols-1 md:grid-cols-2 " style="background-color: lightsteelblue;">
                     <div class="container">
                         <div class="card">
                             <div class="card-body">
@@ -536,33 +536,68 @@
                                 {{ session('error') }}
                             </div>
                         @endif
-                                <h3>Actualizar mesa </h3>
-                  
-                                <form action="{{ route('admin.mesas.update',['mesa_id' => $table->id])}}" method="POST">
+                                <h3>Productos Creados </h3>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre producto</th>
+                                            <th>Categorìa</th>
+                                            <th>Precio</th>         
+                                            <th>Inventario</th>   
+                                            <th>Estado</th>              
+                                            <th>Acciones</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($products as $product)
+                                            <tr>
+                                                <td>{{ $product->name }}</td>
+                                                <td>{{ $product->category }}</td>
+                                                <td>{{ number_format( $product->price, 0, ',', '.') }}</td>
+                                                <td>{{ $product->inventory }}</td>
+                                                @if($product->status == 1)
+                                                <td>Activo</td>
+                                                @else
+                                                <td>Inactivo</td>
+                                                @endif
+                                                <td>
+                                                    <!-- Botón para editar el producto -->
+                                                    <a class="btn-like-link" href="{{ route('admin.products.show', ['product_id' => $product->id]) }}">Editar</a>
+                                                    <a class="btn-like-link-dele" href="{{ route('admin.products.delete', ['product_id' => $product->id]) }}">Eliminar</a>                                                    
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                
+                                <h3>Agregar producto</h3>
+                                <form action="{{ route('admin.products.storeInTable') }}" method="POST">
                                     @csrf
                                     
                                     <div class="form-group">
-                                        <label for="name">Nombre Mesa</label>
-                                        <input type="string" name="name" class="form-control" value="{{  $table->name}}">
+                                        <label for="name">Nombre producto</label>
+                                        <input type="string" name="name" class="form-control">
                                     </div>
-                        
                                     <div class="form-group">
-                                        <label for="location">Ubicacion</label>
-                                        <input type="string" name="location" class="form-control" value="{{  $table->location}}">
-                                    </div>
+                                        <label for="category">Categoria</label>
+                                        <select name="category" class="form-control">
+                                            <option value="restaurante">Restaurante</option>
+                                            <option value="caseta" >Caseta</option>
+                                        </select>
+                                        <div class="form-group">
+                                            <label for="price">Precio</label>
+                                            <input type="number" name="price" class="form-control" pattern="[0-9]*" inputmode="numeric">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="inventory">Inventario</label>
+                                            <input type="number" name="inventory" class="form-control" pattern="[0-9]*" inputmode="numeric">
+                                        </div>                                        
                                     
-                                    <div class="form-group">
-                                        <label for="status">Estado mesa</label>
-                                        <select name="status" class="form-control" value="{{  $table->status}}">
-                                        <option value="1" {{ $table->status == "1" ? 'selected' : '' }}>Activa</option>
-                                        <option value="0" {{ $table->status == "0" ? 'selected' : '' }} >Inactiva</option>
-
-                                    
-                                    </select>
-                                    </div>
                                     <!-- Agrega más campos para la carga del producto si es necesario -->
                         
-                                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                                    <button type="submit" class="btn btn-primary">Agregar producto</button>
                                 </form>
                             </div>
                         </div>
@@ -579,11 +614,6 @@
     </div>
 </body>
 
-
-<!-- Modal para ingresar el valor de la propina -->
-<div class="modal fade" id="propinaModal" tabindex="-1" role="dialog" aria-labelledby="propinaModalLabel" aria-hidden="true">
-    <!-- ... (contenido del modal) ... -->
-  </div>
 </html>
 
 

@@ -57,13 +57,13 @@
                 <!-- Fila para Descuento Total -->
                 <tr>
                     <td colspan="3" style="text-align: right;"><strong>Propina V-5%:</strong></td>
-                    <td style="text-align: right;">{{ number_format(($total * 5 )/100, 0, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format(($total * env('PROPINA') )/100, 0, ',', '.') }}</td>
                     <!-- Otras celdas en esta fila -->
                 </tr>
                 <!-- Fila para Total -->
                 <tr>
                     <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
-                    <td style="text-align: right;">{{ number_format($total + (($total * 5 )/100), 0, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format($total + (($total * env('PROPINA'))/100), 0, ',', '.') }}</td>
                     <!-- Otras celdas en esta fila -->
                 </tr>
             </tbody>

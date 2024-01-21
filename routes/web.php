@@ -3,11 +3,11 @@
 use App\Models\Table;
 use App\Models\ElementTable;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TransactionsTableController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\FacturaController;
-
-
+use App\Models\Producto;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,7 +30,7 @@ Route::get('/', function () {
     }
     $tables = json_decode(json_encode($tables->toArray()));
     return view('all-mesas-inicio',['tables' => $tables]);
-});
+})->name('inicio');
 
 
 // Rutas para gestionar mesa
@@ -69,4 +69,27 @@ Route::prefix('admin/mesas')->group(function () {
     Route::post('{mesa_id}', [TableController::class, 'update'])->name('admin.mesas.update');
     //eliminar producto de mesa
     Route::get('{mesa_id}/delete', [TableController::class, 'delete'])->name('admin.mesas.delete');
+});
+
+
+//Gestionar productos admin
+Route::prefix('admin/productos')->group(function () {
+    //mostrar productos 
+    Route::get('', [ProductController::class, 'showProductsAdmin'])->name('admin.products.showAll');
+    //agregar nuevos productos
+    Route::post('', [ProductController::class, 'storeInTable'])->name('admin.products.storeInTable');
+    //mostrar informacion del producto para actualizar
+    Route::get('{product_id}', [ProductController::class, 'showtable'])->name('admin.products.show');
+    //actualizar informacion producto
+    Route::post('{product_id}', [ProductController::class, 'update'])->name('admin.products.update');
+    //eliminar producto 
+    Route::get('{product_id}/delete', [ProductController::class, 'delete'])->name('admin.products.delete');
+});
+
+
+//Gestionar productos admin
+Route::prefix('admin/facturas')->group(function () {
+    //mostrar productos 
+    Route::get('/{date}', [FacturaController::class, 'showFacturaAdmin'])->name('admin.factura.showAll');
+    //agregar nuevos productos
 });
