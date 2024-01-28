@@ -550,8 +550,9 @@
                                         <select name="category" class="form-control" value="{{  $product->category}}">
                                         <option value="restaurante" {{ $product->category == "restaurante" ? 'selected' : '' }}>Restaurante</option>
                                         <option value="caseta" {{ $product->category == "caseta" ? 'selected' : '' }} >Caseta</option>
-
-                                    
+                                        <option value="restaurante-almuerzos" {{ $product->category == "restaurante-almuerzos" ? 'selected' : '' }}>Restaurante almuerzos</option>
+                                        <option value="restaurante-bebida" {{ $product->category == "restaurante-bebida" ? 'selected' : '' }}>Restaurante bebida</option>
+       
                                     </select>
 
                                     <div class="form-group">

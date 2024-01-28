@@ -30,7 +30,7 @@ class FacturaController extends Controller
             $descuentoTotal = 0;
             foreach ($productosTable as $producto) {
                 // Calcula el subtotal para cada producto
-                $subtotalProducto = ($producto->price - $producto->dicount) * $producto->amount;
+                $subtotalProducto = $producto->price * $producto->amount;
                 $subtotal += $subtotalProducto;
                 // Calcula el descuento total
                 $descuentoTotalProducto = $producto->dicount * $producto->amount;
@@ -102,11 +102,11 @@ class FacturaController extends Controller
                 // ... (tu código actual)
             
                 // Calcula el subtotal para cada producto
-                $subtotalProducto = ($producto->price - $producto->dicount) * $producto->amount;
+                $subtotalProducto = $producto->price * $producto->amount;
                 $subtotal += $subtotalProducto;
             
                 // Calcula el descuento total
-                $descuentoTotalProducto = $producto->dicount * $producto->amount;
+                $descuentoTotalProducto = $producto->discount * $producto->amount;
                 $descuentoTotal += $descuentoTotalProducto;
             }
             
@@ -128,18 +128,33 @@ class FacturaController extends Controller
         $facturas = Factura::whereDate('created_at', $date)->pluck('id')->toArray();
         $totalProductos = 0;
         $totalPrecio = 0; 
-        $detalleElementos = DetalleFactura::select('producto_id', 'productos.name','detalle_facturas.price as precio', DB::raw('SUM(detalle_facturas.amount) as cantidad'))
+        $detalleCocina = [];
+        $cocinaTotalProductos = 0;
+        $cocinaTotalPrecio = 0;
+        $detalleCocinaAlmu = [];
+        $cocinaTotalProductosAlmu = 0;
+        $cocinaTotalPrecioAlmu = 0;
+        $detalleElementos = DetalleFactura::select('producto_id', 'productos.name','productos.category','detalle_facturas.discount as descuento','detalle_facturas.price as precio', DB::raw('SUM(detalle_facturas.amount) as cantidad'))
             ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
             ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
             ->whereIn('facturas.id', $facturas)
-            ->groupBy('producto_id', 'productos.name','detalle_facturas.price')
+            ->groupBy('producto_id', 'productos.name','detalle_facturas.price','category','detalle_facturas.discount')
             ->get();
        if($detalleElementos ){
 
         foreach ($detalleElementos as $key => $value) {
             $totalProductos = $value->cantidad + $totalProductos ;
-            $totalPrecio = ($value->cantidad * $value->precio ) +  $totalPrecio ;
-            # code...
+            $totalPrecio = ($value->cantidad * ($value->precio - $value->descuento )) +  $totalPrecio ;
+           if($value->category === 'restaurante-bebida' || $value->category === 'restaurante-almuerzos'){
+            $detalleCocina[]=$value;
+            $cocinaTotalProductos = $value->cantidad + $cocinaTotalProductos ;
+            $cocinaTotalPrecio = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecio ;
+           }
+           if($value->category === 'restaurante-almuerzos'){
+            $detalleCocinaAlmu[]=$value;
+            $cocinaTotalProductosAlmu = $value->cantidad + $cocinaTotalProductosAlmu ;
+            $cocinaTotalPrecioAlmu = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecioAlmu ;
+           }
         }
 
         $facturas = Factura::whereDate('created_at', $date)->get();
@@ -148,8 +163,8 @@ class FacturaController extends Controller
             $facturasTotal = $facturasTotal + $value->valor_pagado ;
         }
 
-           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos','totalProductos','totalPrecio','facturas','facturasTotal'))->render();
-   
+           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos','totalProductos','totalPrecio','facturas','facturasTotal','detalleCocina','cocinaTotalProductos','cocinaTotalPrecio','detalleCocinaAlmu','cocinaTotalProductosAlmu','cocinaTotalPrecioAlmu'))->render();
+
        }
        return redirect()->route('inicio')->with('success', 'Las facturano no Existe.');
 

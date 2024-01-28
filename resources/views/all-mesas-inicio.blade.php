@@ -58,12 +58,22 @@
     <body class="antialiased">
     
         <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
-
+            {{date_default_timezone_set('America/Bogota');  }}
             <div class="max-w-6xl mx-auto sm:px-6 lg:px-8" >
                 <div class="menu">
                     <a href="/admin/mesas">Mesas</a>
                     <a href="/admin/productos">Productos</a>
                     <a href="/admin/facturas/{{ date('Y-m-d') }}">Facturas</a>
+                    <span class="submenu">
+                        <a href="/admin/facturas/{{ date('Y-m-d') }}">Facturas</a>
+                        <ul>
+                            <li><a href="/admin/facturas/{{ date('Y-m-d') }}?data=productos"> Reportes productos</a></li>
+                            <li><a href="/admin/facturas/{{ date('Y-m-d') }}?data=cocina">Reportes cocina almuerzos</a></li>
+                            <li><a href="/admin/facturas/{{ date('Y-m-d') }}?data=cocina-productos">Reportes cocina productos</a></li>
+                            <li><a href="/admin/facturas/{{ date('Y-m-d') }}?data=facturas">Reportes facturas</a></li>
+                            <!-- Agrega más elementos de submenú según sea necesario -->
+                        </ul>
+                    </span>
                     <!-- Agrega más enlaces de menú según sea necesario -->
                 </div>
     

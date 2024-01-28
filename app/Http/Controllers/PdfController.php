@@ -28,7 +28,7 @@ class PdfController extends Controller
             // ... (tu código actual)
         
             // Calcula el subtotal para cada producto
-            $subtotalProducto = ($producto->price - $producto->dicount) * $producto->amount;
+            $subtotalProducto = ($producto->price ) * $producto->amount;
             $subtotal += $subtotalProducto;
         
             // Calcula el descuento total
@@ -73,7 +73,7 @@ class PdfController extends Controller
             // ... (tu código actual)
         
             // Calcula el subtotal para cada producto
-            $subtotalProducto = ($producto->price - $producto->dicount) * $producto->amount;
+            $subtotalProducto = $producto->price  * $producto->amount;
             $subtotal += $subtotalProducto;
         
             // Calcula el descuento total

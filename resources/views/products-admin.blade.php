@@ -582,7 +582,8 @@
                                     <div class="form-group">
                                         <label for="category">Categoria</label>
                                         <select name="category" class="form-control">
-                                            <option value="restaurante">Restaurante</option>
+                                            <option value="restaurante-almuerzos">Restaurante almuerzos</option>
+                                            <option value="restaurante-bebida">Restaurante bebida</option>
                                             <option value="caseta" >Caseta</option>
                                         </select>
                                         <div class="form-group">

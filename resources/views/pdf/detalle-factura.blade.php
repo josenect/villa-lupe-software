@@ -5,7 +5,7 @@
         /* Definir estilos CSS para el PDF aquí */
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            font-size: 11px;
+            font-size: 14px;
 
             
         }
@@ -41,8 +41,8 @@
                     <tr>
                         <td style="text-align: start;">{{ $producto->amount }}</td>
                         <td  style="text-align: start;">{{ $producto->producto->name }}</td>
-                        <td style="text-align: right;">{{ number_format($producto->price, 0, ',', '.') }}</td>
-                        <td  style="text-align: right;">{{ number_format($producto->price * $producto->amount, 0, ',', '.') }}</td>
+                        <td style="text-align: right;">{{ number_format(($producto->price - $producto->discount), 0, ',', '.') }}</td>
+                        <td  style="text-align: right;">{{ number_format(($producto->price - $producto->discount) * $producto->amount, 0, ',', '.') }}</td>
                         <!-- ... Otros datos ... -->
                     </tr>
                 @endforeach
