@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     //mostras mesas disponibles y ocupadas
-    $tables = Table::all()->where('status',1);
+    $tables = Table::orderBy('name', 'ASC')->where('status',1)->get();
     foreach ($tables as $key => $value) {
         $tables[$key]->status = ElementTable::all()->where('status',1)->where('table_id',$value->id)->isEmpty() ? 'Libre' : 'Ocupada';
         # code...

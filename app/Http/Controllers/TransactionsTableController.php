@@ -15,8 +15,7 @@ class TransactionsTableController extends Controller
     public function show($id)
     {
         $mesa = Table::findOrFail($id);
-        $productos = Producto::all()->where('status',1);
-
+        $productos = Producto::orderBy('name', 'ASC')->where('status',1)->get();
         $productosTable = ElementTable::with('producto')
         ->where('status', 1)
         ->where('table_id', $id)
