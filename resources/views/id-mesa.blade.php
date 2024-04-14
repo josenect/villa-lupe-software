@@ -2,6 +2,12 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    <!-- Incluir CSS de Select2 -->
+<script src="/bookstores/jquery/jquery-3.7.1.min.js.js"></script>
+
+<!-- Incluir JS de Select2 -->
+<script src="/bookstores/select2/dist/js/select2.full.min.js"></script>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -609,12 +615,13 @@
                                     @csrf                        
                                     <div class="form-group">
                                         <label for="producto">Seleccione un producto</label>
-                                        <select name="product_id" class="form-control">
+                                        <select id="product_id" name="product_id" class="form-control">
                                             <option value="">Seleccionar Producto</option>
                                             @foreach ($productos as $producto)
                                                 <option value="{{ $producto->id }}">{{ $producto->name }} - {{ number_format($producto->price, 2, ',', '.') }}</option>
                                             @endforeach
                                         </select>
+                                    
                                     </div>
                         
                                     <div class="form-group">
@@ -663,6 +670,17 @@
 <div class="modal fade" id="propinaModal" tabindex="-1" role="dialog" aria-labelledby="propinaModalLabel" aria-hidden="true">
     <!-- ... (contenido del modal) ... -->
   </div>
+  <link href="/bookstores/select2/dist/css/select2.min.css" rel="stylesheet" />
+
+  <script>
+    $(document).ready(function() {
+        $('#product_id').select2({
+            placeholder: "Seleccionar Producto",
+            allowClear: true,
+            width: '60%' // Ajusta el ancho al 100% del contenedor
+        });
+    });
+</script>
 </html>
 
 

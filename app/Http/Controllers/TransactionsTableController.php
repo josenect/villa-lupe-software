@@ -82,8 +82,8 @@ class TransactionsTableController extends Controller
     {
         $mesa = Table::findOrFail($mesa_id);
         $producto = ElementTable::findOrFail($id);
-        $productos = Producto::where('status', 1)->get();
-    
+        $productos = Producto::orderBy('name', 'ASC')->where('status',1)->get();
+        
         return view('id-mesa-edit-producto', compact('mesa', 'producto', 'productos'));
     }
 

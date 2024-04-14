@@ -23,7 +23,7 @@
         @if(request()->has('data') && request()->get('data') === 'productos')
         <h1 style="text-align: center; margin-right:0;margin-bottom: 0px;"> VILLA LUPE</h1>
         <p style="text-align: center;margin-top: 0px;margin-bottom: 0px;"> Casa de Campo</p>
-        <h2 style="text-align: center;margin-top: 0px">Total productos vendidos</h2>
+        <h2 style="text-align: center;margin-top: 0px">Total productos vendidos : {{ $date }}</h2>
 
         <table>
             <thead>
@@ -70,12 +70,12 @@
         <br>
         <br>
         @if(request()->has('data') && request()->get('data') === 'facturas')
-        <h2 style="text-align: center;margin-top: 0px">Facturas </h2>
+        <h2 style="text-align: center;margin-top: 0px">Facturas : {{ $date }}</h2>
 
         <table>
             <thead>
                 <tr>
-                    <th>Numero Factura</th>
+                    <th>Factura</th>
                     <th>Valor</th>
                     <th>Propina</th>
                     <th>Total</th>
@@ -112,7 +112,7 @@
         <br>
         <br>
         @if(request()->has('data') && request()->get('data') === 'cocina-productos')
-        <h2 style="text-align: center;margin-top: 0px">Productos restaurante </h2>
+        <h2 style="text-align: center;margin-top: 0px">Productos restaurante : {{ $date }}</h2>
 
         <table>
             <thead>
@@ -159,7 +159,7 @@
         <br>
         <br>
         @if(request()->has('data') && request()->get('data') === 'cocina')
-        <h2  style="text-align: center;margin-top: 0px">Productos restaurante almuerzos </h2>
+        <h2  style="text-align: center;margin-top: 0px">Productos restaurante almuerzos : {{ $date }} </h2>
 
         <table>
             <thead>

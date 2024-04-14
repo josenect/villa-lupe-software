@@ -163,7 +163,7 @@ class FacturaController extends Controller
             $facturasTotal = $facturasTotal + $value->valor_pagado ;
         }
 
-           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos','totalProductos','totalPrecio','facturas','facturasTotal','detalleCocina','cocinaTotalProductos','cocinaTotalPrecio','detalleCocinaAlmu','cocinaTotalProductosAlmu','cocinaTotalPrecioAlmu'))->render();
+           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos','totalProductos','totalPrecio','facturas','facturasTotal','detalleCocina','cocinaTotalProductos','cocinaTotalPrecio','detalleCocinaAlmu','cocinaTotalProductosAlmu','cocinaTotalPrecioAlmu','date'))->render();
 
        }
        return redirect()->route('inicio')->with('success', 'Las facturano no Existe.');
