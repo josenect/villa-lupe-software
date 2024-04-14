@@ -2,6 +2,10 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    <script src="/bookstores/jquery/jquery-3.7.1.min.js.js"></script>
+
+    <!-- Incluir JS de Select2 -->
+    <script src="/bookstores/select2/dist/js/select2.full.min.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -482,7 +486,7 @@
                                         @method('PUT')
                                         <div class="form-group">
                                             <label for="producto_id">Seleccionar Producto:</label>
-                                            <select name="producto_id" id="producto_id" class="form-control">
+                                            <select  id="product_id" name="producto_id" id="producto_id" class="form-control">
                                                 @foreach ($productos as $p)
                                                     <option value="{{ $p->id }}" {{ $p->id === $producto->producto_id ? 'selected' : '' }}>{{ $p->name }} - {{ number_format($p->price, 2, ',', '.') }}</option>
                                                 @endforeach
@@ -513,6 +517,17 @@
 
     </div>
     </div>
+    <link href="/bookstores/select2/dist/css/select2.min.css" rel="stylesheet" />
+
+  <script>
+    $(document).ready(function() {
+        $('#product_id').select2({
+            placeholder: "Seleccionar Producto",
+            allowClear: true,
+            width: '60%' // Ajusta el ancho al 100% del contenedor
+        });
+    });
+</script>
 </body>
 
 </html>
