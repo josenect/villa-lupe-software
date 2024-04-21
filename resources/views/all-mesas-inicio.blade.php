@@ -48,6 +48,12 @@
             padding: 10px;
         }
 
+        .bodystyle  {   
+            background-color: slategrey;
+            padding: 10px;
+        }
+        
+   
         .menu a {
             color: #fff;
             text-decoration: none;
@@ -57,7 +63,7 @@
     </head>
     <body class="antialiased">
     
-        <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
+        <div class="bodystyle relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
             {{date_default_timezone_set('America/Bogota');  }}
             <div class="max-w-6xl mx-auto sm:px-6 lg:px-8" >
                 <div class="menu">

@@ -21,7 +21,7 @@
             line-height: 1.15;
             -webkit-text-size-adjust: 100%
         }
-
+        
         body {
             margin: 0
         }
@@ -426,7 +426,11 @@
         body {
             font-family: 'Nunito', sans-serif;
         }
-
+        
+        .bodystyle  {   
+            background-color: slategrey;
+            padding: 10px;
+        }
                 /* Estilo para hacer que el enlace se parezca a un botón */
         .btn-like-link {
             display: inline-block;
@@ -456,7 +460,7 @@
 
 <body class="antialiased">
     <div
-        class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
+        class="relative bodystyle flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
 
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <div class="flex justify-center pt-8 sm:justify-start sm:pt-0">
