@@ -16,11 +16,49 @@ class Factura extends Model
         'valor_pagado',
         'fecha_hora_factura',
         'medio_pago',
+        'estado',
+        'motivo_anulacion',
+        'fecha_anulacion',
     ];
+
+    // Constantes para estados
+    const ESTADO_ACTIVA = 'activa';
+    const ESTADO_ANULADA = 'anulada';
+    const ESTADO_REABIERTA = 'reabierta';
 
     // Relación con la tabla DetalleFactura
     public function detalleFacturas()
     {
         return $this->hasMany(DetalleFactura::class);
+    }
+
+    // Relación con la mesa
+    public function mesa()
+    {
+        return $this->belongsTo(Table::class, 'table_id');
+    }
+
+    // Verificar si la factura está activa
+    public function estaActiva()
+    {
+        return $this->estado === self::ESTADO_ACTIVA;
+    }
+
+    // Verificar si la factura está anulada
+    public function estaAnulada()
+    {
+        return $this->estado === self::ESTADO_ANULADA;
+    }
+
+    // Scope para facturas activas
+    public function scopeActivas($query)
+    {
+        return $query->where('estado', self::ESTADO_ACTIVA);
+    }
+
+    // Scope para facturas anuladas
+    public function scopeAnuladas($query)
+    {
+        return $query->where('estado', self::ESTADO_ANULADA);
     }
 }

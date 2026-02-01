@@ -10,7 +10,14 @@
                 font-size: 12px;
             }   
     
-    
+            .anulada-marca {
+                color: red;
+                font-weight: bold;
+                text-align: center;
+                border: 2px solid red;
+                padding: 5px;
+                margin: 10px 0;
+            }
         
             @media print {
                     @page {
@@ -29,8 +36,8 @@
                         justify-content: space-between; /* Distribuye contenido */
                     }
                     .content {
-            flex-grow: 1; /* Hace que el contenido crezca para llenar el espacio */
-        }
+                        flex-grow: 1; /* Hace que el contenido crezca para llenar el espacio */
+                    }
     
                 h1, h2, p {
                     text-align: center;
@@ -67,12 +74,25 @@
     </head>
 <body>
     <div>
+        @if($factura->estado !== 'activa')
+            <div class="anulada-marca">
+                *** FACTURA {{ strtoupper($factura->estado) }} ***
+            </div>
+        @endif
         
         <h1 style="text-align: center; margin-right:0;margin-bottom: 0px;"> VILLA LUPE</h1>
         <p style="text-align: center;margin-top: 0px;margin-bottom: 0px;"> Casa de Campo</p>
         <p style="text-align: center;margin-top: 0px">Fecha : {{ $factura->created_at }}</p>
         <h2  style="text-align: center;"> {{ $mesa->name }}</h2>
         <h2  style="text-align: center;"> Factura : {{ $factura->numero_factura }}</h2>
+        
+        @if($factura->estado !== 'activa')
+            <p style="text-align: center; color: red; font-size: 10px;">
+                Anulada: {{ $factura->fecha_anulacion }}<br>
+                {{ $factura->motivo_anulacion }}
+            </p>
+        @endif
+        
         <table>
             <thead>
                 <tr>
@@ -122,6 +142,11 @@
             </tfoot>
         </table>
 
+        @if($factura->estado !== 'activa')
+            <div class="anulada-marca" style="margin-top: 10px;">
+                *** NO VÁLIDA ***
+            </div>
+        @endif
     </div>
 </body>
 </html>

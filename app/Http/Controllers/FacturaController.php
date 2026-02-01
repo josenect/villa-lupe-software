@@ -52,8 +52,9 @@ class FacturaController extends Controller
             $factura->table_id = $mesaId;
             $factura->valor_propina = $propina;
             $factura->valor_pagado = $total + $propina;
-            $factura->fecha_hora_factura = now(); // Puedes usar Carbon para la fecha y hora actual
+            $factura->fecha_hora_factura = now();
             $factura->medio_pago = 'Efectivo';
+            $factura->estado = Factura::ESTADO_ACTIVA;
             $factura->save();
     
             foreach ($productosTable as $key => $value) {
@@ -71,7 +72,8 @@ class FacturaController extends Controller
          
         }else{
             $ultimaFactura = Factura::where('table_id', $mesaId)
-            ->latest() // Ordena por fecha_hora_factura de manera descendente
+            ->where('estado', Factura::ESTADO_ACTIVA)
+            ->latest()
             ->first();
             if(!is_null($ultimaFactura)){
               $numeroFactura  = $ultimaFactura->numero_factura;
@@ -99,8 +101,6 @@ class FacturaController extends Controller
             $subtotal = 0;
             $descuentoTotal = 0;
             foreach ($productosFactura as $producto) {
-                // ... (tu código actual)
-            
                 // Calcula el subtotal para cada producto
                 $subtotalProducto = $producto->price * $producto->amount;
                 $subtotal += $subtotalProducto;
@@ -119,13 +119,16 @@ class FacturaController extends Controller
 
     }
 
-   //visualizar factura
-   public function showFacturaAdmin($date)
-   {
-   
-       date_default_timezone_set('America/Bogota'); 
+    //visualizar factura admin con reportes del día
+    public function showFacturaAdmin($date)
+    {
+        date_default_timezone_set('America/Bogota'); 
 
-        $facturas = Factura::whereDate('created_at', $date)->pluck('id')->toArray();
+        // Solo facturas activas para los reportes
+        $facturas = Factura::whereDate('created_at', $date)
+            ->where('estado', Factura::ESTADO_ACTIVA)
+            ->pluck('id')->toArray();
+        
         $totalProductos = 0;
         $totalPrecio = 0; 
         $detalleCocina = [];
@@ -134,41 +137,163 @@ class FacturaController extends Controller
         $detalleCocinaAlmu = [];
         $cocinaTotalProductosAlmu = 0;
         $cocinaTotalPrecioAlmu = 0;
+        
         $detalleElementos = DetalleFactura::select('producto_id', 'productos.name','productos.category','detalle_facturas.discount as descuento','detalle_facturas.price as precio', DB::raw('SUM(detalle_facturas.amount) as cantidad'))
             ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
             ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
             ->whereIn('facturas.id', $facturas)
+            ->where('facturas.estado', Factura::ESTADO_ACTIVA)
             ->groupBy('producto_id', 'productos.name','detalle_facturas.price','category','detalle_facturas.discount')
             ->get();
-       if($detalleElementos ){
+       
+        if($detalleElementos){
+            foreach ($detalleElementos as $key => $value) {
+                $totalProductos = $value->cantidad + $totalProductos ;
+                $totalPrecio = ($value->cantidad * ($value->precio - $value->descuento )) +  $totalPrecio ;
+                if($value->category === 'restaurante-bebida' || $value->category === 'restaurante-almuerzos'){
+                    $detalleCocina[]=$value;
+                    $cocinaTotalProductos = $value->cantidad + $cocinaTotalProductos ;
+                    $cocinaTotalPrecio = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecio ;
+                }
+                if($value->category === 'restaurante-almuerzos'){
+                    $detalleCocinaAlmu[]=$value;
+                    $cocinaTotalProductosAlmu = $value->cantidad + $cocinaTotalProductosAlmu ;
+                    $cocinaTotalPrecioAlmu = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecioAlmu ;
+                }
+            }
 
-        foreach ($detalleElementos as $key => $value) {
-            $totalProductos = $value->cantidad + $totalProductos ;
-            $totalPrecio = ($value->cantidad * ($value->precio - $value->descuento )) +  $totalPrecio ;
-           if($value->category === 'restaurante-bebida' || $value->category === 'restaurante-almuerzos'){
-            $detalleCocina[]=$value;
-            $cocinaTotalProductos = $value->cantidad + $cocinaTotalProductos ;
-            $cocinaTotalPrecio = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecio ;
-           }
-           if($value->category === 'restaurante-almuerzos'){
-            $detalleCocinaAlmu[]=$value;
-            $cocinaTotalProductosAlmu = $value->cantidad + $cocinaTotalProductosAlmu ;
-            $cocinaTotalPrecioAlmu = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecioAlmu ;
-           }
+            // Todas las facturas del día (activas y anuladas) para mostrar en la lista
+            $facturas = Factura::with('mesa')
+                ->whereDate('created_at', $date)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            $facturasTotal = 0;
+            foreach ($facturas as $key => $value) {
+                // Solo sumar las activas al total
+                if($value->estado === Factura::ESTADO_ACTIVA) {
+                    $facturasTotal = $facturasTotal + $value->valor_pagado;
+                }
+            }
+
+            return view('pdf.detalle-factura-day', compact(
+                'facturas',
+                'detalleElementos',
+                'totalProductos',
+                'totalPrecio',
+                'facturasTotal',
+                'detalleCocina',
+                'cocinaTotalProductos',
+                'cocinaTotalPrecio',
+                'detalleCocinaAlmu',
+                'cocinaTotalProductosAlmu',
+                'cocinaTotalPrecioAlmu',
+                'date'
+            ))->render();
         }
+        
+        return redirect()->route('inicio')->with('success', 'Las facturas no existen.');
+    }
 
-        $facturas = Factura::whereDate('created_at', $date)->get();
-        $facturasTotal = 0;
-        foreach ($facturas as $key => $value) {
-            $facturasTotal = $facturasTotal + $value->valor_pagado ;
+    /**
+     * Mostrar formulario para anular factura
+     */
+    public function showAnular($facturaId)
+    {
+        $factura = Factura::with('mesa', 'detalleFacturas.producto')->findOrFail($facturaId);
+        
+        if($factura->estado !== Factura::ESTADO_ACTIVA) {
+            return redirect()->back()->with('error', 'Esta factura ya está anulada o no se puede modificar.');
         }
+        
+        return view('facturas.anular', compact('factura'));
+    }
 
-           return view('pdf.detalle-factura-day', compact('facturas','detalleElementos','totalProductos','totalPrecio','facturas','facturasTotal','detalleCocina','cocinaTotalProductos','cocinaTotalPrecio','detalleCocinaAlmu','cocinaTotalProductosAlmu','cocinaTotalPrecioAlmu','date'))->render();
+    /**
+     * Anular una factura
+     */
+    public function anular(Request $request, $facturaId)
+    {
+        date_default_timezone_set('America/Bogota');
+        
+        $factura = Factura::findOrFail($facturaId);
+        
+        if($factura->estado !== Factura::ESTADO_ACTIVA) {
+            return redirect()->back()->with('error', 'Esta factura ya está anulada.');
+        }
+        
+        $factura->estado = Factura::ESTADO_ANULADA;
+        $factura->motivo_anulacion = $request->input('motivo', 'Sin motivo especificado');
+        $factura->fecha_anulacion = now();
+        $factura->save();
+        
+        return redirect()->route('admin.factura.showAll', date('Y-m-d'))
+            ->with('success', 'Factura ' . $factura->numero_factura . ' anulada correctamente.');
+    }
 
-       }
-       return redirect()->route('inicio')->with('success', 'Las facturano no Existe.');
+    /**
+     * Reabrir una factura (anularla y cargar productos a la mesa)
+     */
+    public function reabrir(Request $request, $facturaId)
+    {
+        date_default_timezone_set('America/Bogota');
+        
+        $factura = Factura::with('detalleFacturas')->findOrFail($facturaId);
+        
+        if($factura->estado !== Factura::ESTADO_ACTIVA) {
+            return redirect()->back()->with('error', 'Esta factura ya está anulada y no se puede reabrir.');
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            // 1. Cargar los productos de la factura a la mesa
+            foreach ($factura->detalleFacturas as $detalle) {
+                $elementTable = new ElementTable();
+                $elementTable->table_id = $factura->table_id;
+                $elementTable->producto_id = $detalle->producto_id;
+                $elementTable->price = $detalle->price;
+                $elementTable->amount = $detalle->amount;
+                $elementTable->dicount = $detalle->discount;
+                $elementTable->record = now();
+                $elementTable->status = 1;
+                $elementTable->save();
+            }
+            
+            // 2. Marcar la factura como reabierta/anulada
+            $factura->estado = Factura::ESTADO_REABIERTA;
+            $factura->motivo_anulacion = $request->input('motivo', 'Factura reabierta - productos cargados a la mesa');
+            $factura->fecha_anulacion = now();
+            $factura->save();
+            
+            DB::commit();
+            
+            return redirect()->route('mesa.show', $factura->table_id)
+                ->with('success', 'Factura ' . $factura->numero_factura . ' reabierta. Los productos han sido cargados a la mesa.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error al reabrir la factura: ' . $e->getMessage());
+        }
+    }
 
-   }
-    
-    
+    /**
+     * Ver detalle de una factura específica
+     */
+    public function showDetalle($facturaId)
+    {
+        $factura = Factura::with('mesa', 'detalleFacturas.producto')->findOrFail($facturaId);
+        
+        $subtotal = 0;
+        $descuentoTotal = 0;
+        
+        foreach ($factura->detalleFacturas as $detalle) {
+            $subtotal += $detalle->price * $detalle->amount;
+            $descuentoTotal += $detalle->discount * $detalle->amount;
+        }
+        
+        $total = $subtotal - $descuentoTotal;
+        
+        return view('facturas.detalle', compact('factura', 'subtotal', 'descuentoTotal', 'total'));
+    }
 }

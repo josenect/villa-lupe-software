@@ -87,9 +87,16 @@ Route::prefix('admin/productos')->group(function () {
 });
 
 
-//Gestionar productos admin
+//Gestionar facturas admin
 Route::prefix('admin/facturas')->group(function () {
-    //mostrar productos 
+    //mostrar facturas del día
     Route::get('/{date}', [FacturaController::class, 'showFacturaAdmin'])->name('admin.factura.showAll');
-    //agregar nuevos productos
+    //ver detalle de factura
+    Route::get('/detalle/{facturaId}', [FacturaController::class, 'showDetalle'])->name('admin.factura.detalle');
+    //mostrar formulario para anular factura
+    Route::get('/anular/{facturaId}', [FacturaController::class, 'showAnular'])->name('admin.factura.showAnular');
+    //anular factura
+    Route::post('/anular/{facturaId}', [FacturaController::class, 'anular'])->name('admin.factura.anular');
+    //reabrir factura (anular y cargar productos a la mesa)
+    Route::post('/reabrir/{facturaId}', [FacturaController::class, 'reabrir'])->name('admin.factura.reabrir');
 });
