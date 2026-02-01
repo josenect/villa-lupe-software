@@ -126,6 +126,23 @@
                 <td colspan="3" style="text-align:right;"><strong>Total:</strong></td>
                 <td style="text-align:right;">{{ number_format($total + $factura->valor_propina, 0, ',', '.') }}</td>
             </tr>
+            <tr>
+                <td colspan="4" style="text-align:center;">--------------------------------</td>
+            </tr>
+            @if($factura->medio_pago === 'Mixto')
+                <tr>
+                    <td colspan="2" style="text-align:left;"><strong>Efectivo:</strong></td>
+                    <td colspan="2" style="text-align:right;">{{ number_format($factura->valor_efectivo, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align:left;"><strong>Transferencia:</strong></td>
+                    <td colspan="2" style="text-align:right;">{{ number_format($factura->valor_transferencia, 0, ',', '.') }}</td>
+                </tr>
+            @else
+                <tr>
+                    <td colspan="4" style="text-align:center;"><strong>Pago: {{ $factura->medio_pago }}</strong></td>
+                </tr>
+            @endif
         </tbody>
     </table>
 

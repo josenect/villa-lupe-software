@@ -14,6 +14,8 @@ class Factura extends Model
         'valor_total',
         'valor_propina',
         'valor_pagado',
+        'valor_efectivo',
+        'valor_transferencia',
         'fecha_hora_factura',
         'medio_pago',
         'estado',

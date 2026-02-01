@@ -101,6 +101,18 @@
                 <td style="text-align:right;"><strong>{{ $facturas->where('estado', 'activa')->count() }}</strong></td>
             </tr>
             <tr>
+                <td style="text-align:left;"><strong>Efectivo:</strong></td>
+                <td style="text-align:right;"><strong>$ {{ number_format($totalEfectivo, 0, ',', '.') }}</strong></td>
+            </tr>
+            <tr>
+                <td style="text-align:left;"><strong>Transferencia:</strong></td>
+                <td style="text-align:right;"><strong>$ {{ number_format($totalTransferencia, 0, ',', '.') }}</strong></td>
+            </tr>
+            <tr>
+                <td style="text-align:left;"><strong>Propinas:</strong></td>
+                <td style="text-align:right;"><strong>$ {{ number_format($propinaTotal, 0, ',', '.') }}</strong></td>
+            </tr>
+            <tr>
                 <td style="text-align:left;"><strong>TOTAL VENTAS:</strong></td>
                 <td style="text-align:right;"><strong>$ {{ number_format($facturasTotal, 0, ',', '.') }}</strong></td>
             </tr>

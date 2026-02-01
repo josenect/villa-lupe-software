@@ -104,6 +104,37 @@
     </div>
 </div>
 
+<!-- Resumen por Método de Pago -->
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-md-4">
+        <div class="card-custom h-100" style="border-left: 4px solid #27ae60;">
+            <div class="card-body-custom text-center">
+                <i class="bi bi-cash text-success" style="font-size: 2rem;"></i>
+                <h3 class="text-success mt-2 mb-0">$ {{ number_format($totalEfectivo, 0, ',', '.') }}</h3>
+                <small class="text-muted">Total Efectivo</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom h-100" style="border-left: 4px solid #3498db;">
+            <div class="card-body-custom text-center">
+                <i class="bi bi-phone text-primary" style="font-size: 2rem;"></i>
+                <h3 class="text-primary mt-2 mb-0">$ {{ number_format($totalTransferencia, 0, ',', '.') }}</h3>
+                <small class="text-muted">Total Transferencia</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom h-100" style="border-left: 4px solid #e74c3c;">
+            <div class="card-body-custom text-center">
+                <i class="bi bi-heart text-danger" style="font-size: 2rem;"></i>
+                <h3 class="text-danger mt-2 mb-0">$ {{ number_format($propinaTotal, 0, ',', '.') }}</h3>
+                <small class="text-muted">Total Propinas</small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- REPORTE DE FACTURAS -->
 @if(!request()->has('data') || request()->get('data') === 'facturas')
 <div class="card-custom mb-4 fade-in">
@@ -121,6 +152,7 @@
                             <th><i class="bi bi-cash"></i> Valor</th>
                             <th><i class="bi bi-heart"></i> Propina</th>
                             <th><i class="bi bi-cash-stack"></i> Total</th>
+                            <th><i class="bi bi-credit-card"></i> Pago</th>
                             <th><i class="bi bi-clock"></i> Hora</th>
                             <th><i class="bi bi-toggle-on"></i> Estado</th>
                             <th class="no-print"><i class="bi bi-gear"></i> Acciones</th>
@@ -140,6 +172,17 @@
                                         <strong class="text-success">$ {{ number_format($factura->valor_pagado, 0, ',', '.') }}</strong>
                                     @else
                                         <del class="text-muted">$ {{ number_format($factura->valor_pagado, 0, ',', '.') }}</del>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($factura->medio_pago === 'Mixto')
+                                        <span class="badge bg-warning text-dark" title="Efectivo: ${{ number_format($factura->valor_efectivo, 0, ',', '.') }} | Transf: ${{ number_format($factura->valor_transferencia, 0, ',', '.') }}">
+                                            <i class="bi bi-cash"></i>/<i class="bi bi-phone"></i> Mixto
+                                        </span>
+                                    @elseif($factura->medio_pago === 'Transferencia')
+                                        <span class="badge bg-primary"><i class="bi bi-phone"></i> Transf.</span>
+                                    @else
+                                        <span class="badge bg-success"><i class="bi bi-cash"></i> Efectivo</span>
                                     @endif
                                 </td>
                                 <td>
@@ -177,8 +220,8 @@
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td colspan="4" class="text-end"><strong>TOTAL FACTURAS ACTIVAS:</strong></td>
-                            <td colspan="4"><strong class="fs-5">$ {{ number_format($facturasTotal, 0, ',', '.') }}</strong></td>
+                            <td colspan="5" class="text-end"><strong>TOTAL FACTURAS ACTIVAS:</strong></td>
+                            <td colspan="5"><strong class="fs-5">$ {{ number_format($facturasTotal, 0, ',', '.') }}</strong></td>
                         </tr>
                     </tfoot>
                 </table>

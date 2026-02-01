@@ -25,6 +25,27 @@
     .select2-container--default .select2-results__option--highlighted[aria-selected] {
         background-color: #3498db;
     }
+    .pago-box {
+        padding: 10px;
+        border-radius: 10px;
+        background: #f8f9fa;
+    }
+    .pago-box.efectivo {
+        border: 2px solid #27ae60;
+    }
+    .pago-box.transferencia {
+        border: 2px solid #3498db;
+    }
+    .pago-box .input-group-text {
+        background: white;
+        border-color: #dee2e6;
+    }
+    .input-group-text {
+        background: #e9ecef;
+        border: 2px solid #e9ecef;
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+    }
 </style>
 @endsection
 
@@ -143,6 +164,101 @@
     </div>
 </div>
 
+<!-- Modal Generar Factura -->
+<div class="modal fade" id="modalFactura" tabindex="-1" aria-labelledby="modalFacturaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" id="modalFacturaLabel">
+                    <i class="bi bi-receipt"></i> Generar Factura
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <h6 class="text-muted mb-2">Total de la Mesa</h6>
+                    <h2 class="text-primary mb-0">$ {{ number_format($total, 0, ',', '.') }}</h2>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label-custom">
+                        <i class="bi bi-heart text-danger"></i> Propina
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" id="modal-propina" class="form-control-custom" value="{{ number_format(($total * env('PROPINA'))/100, 0, '', '') }}" min="0" style="border-radius: 0 10px 10px 0;">
+                    </div>
+                    <small class="text-muted">Sugerida ({{ env('PROPINA') }}%): $ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label-custom">
+                        <i class="bi bi-credit-card"></i> Forma de Pago
+                    </label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="pago-box efectivo">
+                                <label class="small text-success mb-1"><i class="bi bi-cash-stack"></i> Efectivo</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" id="modal-efectivo" class="form-control" value="{{ $total + number_format(($total * env('PROPINA'))/100, 0, '', '') }}" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="pago-box transferencia">
+                                <label class="small text-primary mb-1"><i class="bi bi-phone"></i> Transferencia</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" id="modal-transferencia" class="form-control" value="0" min="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <small class="text-muted">Puede dividir el pago entre efectivo y transferencia</small>
+                </div>
+                
+                <div class="bg-light p-3 rounded-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span>$ {{ number_format($total, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Propina:</span>
+                        <span id="modal-propina-display">$ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Total a Pagar:</strong>
+                        <strong class="text-success" id="modal-total-display">$ {{ number_format($total + (($total * env('PROPINA'))/100), 0, ',', '.') }}</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-success"><i class="bi bi-cash-stack"></i> Efectivo:</span>
+                        <span id="resumen-efectivo">$ {{ number_format($total + (($total * env('PROPINA'))/100), 0, ',', '.') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-primary"><i class="bi bi-phone"></i> Transferencia:</span>
+                        <span id="resumen-transferencia">$ 0</span>
+                    </div>
+                </div>
+                
+                <div id="alerta-pago" class="alert alert-danger mt-3 mb-0 d-none" style="font-size: 0.85rem;">
+                    <i class="bi bi-exclamation-triangle"></i> La suma de efectivo y transferencia debe ser igual al total a pagar.
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cancelar
+                </button>
+                <button type="button" class="btn-success-custom" id="confirmar-factura-btn">
+                    <i class="bi bi-check-lg"></i> Confirmar Factura
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Productos en la Mesa -->
 <div class="card-custom fade-in">
     <div class="card-header-custom">
@@ -228,14 +344,85 @@
         });
     });
     
+    var totalMesa = {{ $total }};
+    var propinaSugerida = {{ number_format(($total * env('PROPINA'))/100, 0, '', '') }};
+    
+    function actualizarTotales() {
+        var propina = parseFloat(document.getElementById('modal-propina').value) || 0;
+        var totalPagar = totalMesa + propina;
+        var efectivo = parseFloat(document.getElementById('modal-efectivo').value) || 0;
+        var transferencia = parseFloat(document.getElementById('modal-transferencia').value) || 0;
+        var sumaPagos = efectivo + transferencia;
+        
+        // Actualizar displays
+        document.getElementById('modal-propina-display').textContent = '$ ' + propina.toLocaleString('es-CO');
+        document.getElementById('modal-total-display').textContent = '$ ' + totalPagar.toLocaleString('es-CO');
+        document.getElementById('resumen-efectivo').textContent = '$ ' + efectivo.toLocaleString('es-CO');
+        document.getElementById('resumen-transferencia').textContent = '$ ' + transferencia.toLocaleString('es-CO');
+        
+        // Validar que la suma sea igual al total
+        var alerta = document.getElementById('alerta-pago');
+        var btnConfirmar = document.getElementById('confirmar-factura-btn');
+        
+        if (Math.abs(sumaPagos - totalPagar) > 0.01) {
+            alerta.classList.remove('d-none');
+            btnConfirmar.disabled = true;
+            btnConfirmar.style.opacity = '0.5';
+        } else {
+            alerta.classList.add('d-none');
+            btnConfirmar.disabled = false;
+            btnConfirmar.style.opacity = '1';
+        }
+    }
+    
+    // Abrir modal al hacer clic en Generar Factura
     document.getElementById('generar-factura-btn')?.addEventListener('click', function(event) {
         event.preventDefault();
-        var mesaId = this.getAttribute('data-mesa-id');
-        var propina = prompt('Ingrese el valor de la propina:', '0');
-        if (propina !== null) {
-            var url = '/generar-factura/' + mesaId + '?propina=' + propina;
-            window.open(url, '_blank');
+        // Resetear valores al abrir
+        var totalPagar = totalMesa + propinaSugerida;
+        document.getElementById('modal-propina').value = propinaSugerida;
+        document.getElementById('modal-efectivo').value = totalPagar;
+        document.getElementById('modal-transferencia').value = 0;
+        actualizarTotales();
+        var modal = new bootstrap.Modal(document.getElementById('modalFactura'));
+        modal.show();
+    });
+    
+    // Actualizar cuando cambia la propina
+    document.getElementById('modal-propina')?.addEventListener('input', function() {
+        var propina = parseFloat(this.value) || 0;
+        var totalPagar = totalMesa + propina;
+        // Auto-ajustar efectivo si transferencia es 0
+        var transferencia = parseFloat(document.getElementById('modal-transferencia').value) || 0;
+        if (transferencia === 0) {
+            document.getElementById('modal-efectivo').value = totalPagar;
         }
+        actualizarTotales();
+    });
+    
+    // Actualizar cuando cambia efectivo
+    document.getElementById('modal-efectivo')?.addEventListener('input', actualizarTotales);
+    
+    // Actualizar cuando cambia transferencia
+    document.getElementById('modal-transferencia')?.addEventListener('input', actualizarTotales);
+    
+    // Confirmar y generar factura
+    document.getElementById('confirmar-factura-btn')?.addEventListener('click', function() {
+        var mesaId = document.getElementById('generar-factura-btn').getAttribute('data-mesa-id');
+        var propina = document.getElementById('modal-propina').value || 0;
+        var efectivo = document.getElementById('modal-efectivo').value || 0;
+        var transferencia = document.getElementById('modal-transferencia').value || 0;
+        
+        // Determinar método de pago
+        var metodoPago = 'Efectivo';
+        if (parseFloat(efectivo) > 0 && parseFloat(transferencia) > 0) {
+            metodoPago = 'Mixto';
+        } else if (parseFloat(transferencia) > 0) {
+            metodoPago = 'Transferencia';
+        }
+        
+        var url = '/generar-factura/' + mesaId + '?propina=' + propina + '&efectivo=' + efectivo + '&transferencia=' + transferencia + '&medio_pago=' + encodeURIComponent(metodoPago);
+        window.location.href = url;
     });
 </script>
 @endsection

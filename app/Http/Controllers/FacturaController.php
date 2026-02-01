@@ -18,7 +18,10 @@ class FacturaController extends Controller
     {
         date_default_timezone_set('America/Bogota'); 
 
-        $propina = $request->input('propina')?? 0;
+        $propina = $request->input('propina') ?? 0;
+        $medioPago = $request->input('medio_pago') ?? 'Efectivo';
+        $valorEfectivo = $request->input('efectivo') ?? 0;
+        $valorTransferencia = $request->input('transferencia') ?? 0;
 
         $productosTable = ElementTable::with('producto')
         ->where('status', 1)
@@ -52,8 +55,10 @@ class FacturaController extends Controller
             $factura->table_id = $mesaId;
             $factura->valor_propina = $propina;
             $factura->valor_pagado = $total + $propina;
+            $factura->valor_efectivo = $valorEfectivo;
+            $factura->valor_transferencia = $valorTransferencia;
             $factura->fecha_hora_factura = now();
-            $factura->medio_pago = 'Efectivo';
+            $factura->medio_pago = $medioPago;
             $factura->estado = Factura::ESTADO_ACTIVA;
             $factura->save();
     
@@ -169,10 +174,19 @@ class FacturaController extends Controller
                 ->get();
             
             $facturasTotal = 0;
+            $totalEfectivo = 0;
+            $totalTransferencia = 0;
+            $propinaTotal = 0;
+            
             foreach ($facturas as $key => $value) {
                 // Solo sumar las activas al total
                 if($value->estado === Factura::ESTADO_ACTIVA) {
                     $facturasTotal = $facturasTotal + $value->valor_pagado;
+                    $propinaTotal = $propinaTotal + $value->valor_propina;
+                    
+                    // Sumar por los campos de valor
+                    $totalEfectivo = $totalEfectivo + $value->valor_efectivo;
+                    $totalTransferencia = $totalTransferencia + $value->valor_transferencia;
                 }
             }
 
@@ -182,6 +196,9 @@ class FacturaController extends Controller
                 'totalProductos',
                 'totalPrecio',
                 'facturasTotal',
+                'totalEfectivo',
+                'totalTransferencia',
+                'propinaTotal',
                 'detalleCocina',
                 'cocinaTotalProductos',
                 'cocinaTotalPrecio',
@@ -350,9 +367,18 @@ class FacturaController extends Controller
             ->get();
         
         $facturasTotal = 0;
+        $totalEfectivo = 0;
+        $totalTransferencia = 0;
+        $propinaTotal = 0;
+        
         foreach ($facturas as $key => $value) {
             if($value->estado === Factura::ESTADO_ACTIVA) {
                 $facturasTotal = $facturasTotal + $value->valor_pagado;
+                $propinaTotal = $propinaTotal + $value->valor_propina;
+                
+                // Sumar por los campos de valor
+                $totalEfectivo = $totalEfectivo + $value->valor_efectivo;
+                $totalTransferencia = $totalTransferencia + $value->valor_transferencia;
             }
         }
 
@@ -362,6 +388,9 @@ class FacturaController extends Controller
             'totalProductos',
             'totalPrecio',
             'facturasTotal',
+            'totalEfectivo',
+            'totalTransferencia',
+            'propinaTotal',
             'detalleCocina',
             'cocinaTotalProductos',
             'cocinaTotalPrecio',
