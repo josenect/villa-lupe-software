@@ -22,12 +22,16 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    //mostras mesas disponibles y ocupadas
-    $tables = Table::orderBy('location', 'ASC')->orderBy('name', 'ASC')->where('status',1)->get();
+    //mostrar mesas disponibles y ocupadas
+    $tables = Table::where('status',1)->get();
     foreach ($tables as $key => $value) {
-        $tables[$key]->status = ElementTable::all()->where('status',1)->where('table_id',$value->id)->isEmpty() ? 'Libre' : 'Ocupada';
-        # code...
+        $tables[$key]->status = ElementTable::where('status',1)->where('table_id',$value->id)->exists() ? 'Ocupada' : 'Libre';
     }
+    // Ordenar: primero ocupadas, luego por nombre
+    $tables = $tables->sortBy([
+        ['status', 'desc'], // Ocupada viene antes de Libre (O > L)
+        ['name', 'asc']
+    ])->values();
     $tables = json_decode(json_encode($tables->toArray()));
     return view('all-mesas-inicio',['tables' => $tables]);
 })->name('inicio');

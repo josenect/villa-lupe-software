@@ -30,11 +30,15 @@
 @endif
 
 <div class="card-custom fade-in">
-    <div class="card-header-custom">
-        <h2><i class="bi bi-grid-3x3-gap"></i> Estado de las Mesas</h2>
+    <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h2 class="mb-0"><i class="bi bi-grid-3x3-gap"></i> Estado de las Mesas</h2>
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" id="buscarMesa" class="form-control-custom" placeholder="Buscar mesa..." style="padding-left: 35px; min-width: 200px;">
+        </div>
     </div>
     <div class="card-body-custom">
-        <div class="row g-4">
+        <div class="row g-4" id="listaMesas">
             @foreach ($tables as $table)
                 @php
                     $tableStatus = is_object($table) ? $table->status : $table['status'];
@@ -42,7 +46,7 @@
                     $tableLocation = is_object($table) ? $table->location : $table['location'];
                     $tableId = is_object($table) ? $table->id : $table['id'];
                 @endphp
-                <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mesa-item" data-nombre="{{ strtolower($tableName) }}" data-ubicacion="{{ strtolower($tableLocation) }}">
                     <div class="mesa-card {{ $tableStatus == 'Ocupada' ? 'ocupada' : 'disponible' }}">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h4 class="mb-0">
@@ -115,4 +119,24 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.getElementById('buscarMesa').addEventListener('input', function() {
+    const busqueda = this.value.toLowerCase().trim();
+    const mesas = document.querySelectorAll('.mesa-item');
+    
+    mesas.forEach(function(mesa) {
+        const nombre = mesa.getAttribute('data-nombre');
+        const ubicacion = mesa.getAttribute('data-ubicacion');
+        
+        if (nombre.includes(busqueda) || ubicacion.includes(busqueda)) {
+            mesa.style.display = '';
+        } else {
+            mesa.style.display = 'none';
+        }
+    });
+});
+</script>
 @endsection

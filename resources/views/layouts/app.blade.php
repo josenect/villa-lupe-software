@@ -413,6 +413,24 @@
             color: #7f8c8d;
         }
         
+        /* Search Box */
+        .search-box {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        .search-box input {
+            padding-left: 35px !important;
+        }
+        
         /* Action Buttons Container */
         .action-buttons {
             display: flex;

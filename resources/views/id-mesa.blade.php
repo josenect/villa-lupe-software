@@ -95,8 +95,56 @@
     </div>
 </div>
 
-<!-- Productos en la Mesa -->
+<!-- Agregar Producto -->
 <div class="card-custom mb-4 fade-in">
+    <div class="card-header-custom">
+        <h2><i class="bi bi-plus-circle"></i> Agregar Producto</h2>
+    </div>
+    <div class="card-body-custom">
+        <form action="{{ route('add.product.table', ['mesa_id' => $mesa->id]) }}" method="POST">
+            @csrf
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="form-group mb-0">
+                        <label class="form-label-custom">
+                            <i class="bi bi-box-seam"></i> Seleccione un producto
+                        </label>
+                        <select id="product_id" name="product_id" class="form-select-custom" required>
+                            <option value="">Seleccionar Producto</option>
+                            @foreach ($productos as $producto)
+                                <option value="{{ $producto->id }}">{{ $producto->name }} - $ {{ number_format($producto->price, 0, ',', '.') }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label-custom">
+                            <i class="bi bi-hash"></i> Cantidad
+                        </label>
+                        <input type="number" name="amount" class="form-control-custom" min="1" value="1" required>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group mb-0">
+                        <label class="form-label-custom">
+                            <i class="bi bi-percent"></i> Descuento
+                        </label>
+                        <input type="number" name="dicount" class="form-control-custom" min="0" value="0">
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn-success-custom w-100 justify-content-center">
+                        <i class="bi bi-plus-lg"></i> Agregar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Productos en la Mesa -->
+<div class="card-custom fade-in">
     <div class="card-header-custom">
         <h2><i class="bi bi-cart3"></i> Productos en la Mesa</h2>
     </div>
@@ -164,54 +212,6 @@
                 <p class="text-muted mt-3">No hay productos agregados a esta mesa</p>
             </div>
         @endif
-    </div>
-</div>
-
-<!-- Agregar Producto -->
-<div class="card-custom fade-in">
-    <div class="card-header-custom">
-        <h2><i class="bi bi-plus-circle"></i> Agregar Producto</h2>
-    </div>
-    <div class="card-body-custom">
-        <form action="{{ route('add.product.table', ['mesa_id' => $mesa->id]) }}" method="POST">
-            @csrf
-            <div class="row g-3">
-                <div class="col-md-5">
-                    <div class="form-group mb-0">
-                        <label class="form-label-custom">
-                            <i class="bi bi-box-seam"></i> Seleccione un producto
-                        </label>
-                        <select id="product_id" name="product_id" class="form-select-custom" required>
-                            <option value="">Seleccionar Producto</option>
-                            @foreach ($productos as $producto)
-                                <option value="{{ $producto->id }}">{{ $producto->name }} - $ {{ number_format($producto->price, 0, ',', '.') }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group mb-0">
-                        <label class="form-label-custom">
-                            <i class="bi bi-hash"></i> Cantidad
-                        </label>
-                        <input type="number" name="amount" class="form-control-custom" min="1" value="1" required>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group mb-0">
-                        <label class="form-label-custom">
-                            <i class="bi bi-percent"></i> Descuento
-                        </label>
-                        <input type="number" name="dicount" class="form-control-custom" min="0" value="0">
-                    </div>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn-success-custom w-100 justify-content-center">
-                        <i class="bi bi-plus-lg"></i> Agregar
-                    </button>
-                </div>
-            </div>
-        </form>
     </div>
 </div>
 @endsection
