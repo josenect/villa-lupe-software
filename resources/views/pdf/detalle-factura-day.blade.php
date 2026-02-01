@@ -57,9 +57,9 @@
             <a href="/admin/facturas/{{ $date }}?data=cocina-productos" class="btn-primary-custom {{ request()->get('data') == 'cocina-productos' ? '' : 'btn-secondary-custom' }}">
                 <i class="bi bi-cup-hot"></i> Cocina Productos
             </a>
-            <button onclick="window.print()" class="btn-success-custom">
-                <i class="bi bi-printer"></i> Imprimir
-            </button>
+            <a href="/visual-reporte/{{ $date }}?data={{ request()->get('data', 'facturas') }}" target="_blank" class="btn-warning-custom">
+                <i class="bi bi-printer"></i> Imprimir Ticket
+            </a>
         </div>
     </div>
 </div>

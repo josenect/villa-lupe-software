@@ -296,4 +296,80 @@ class FacturaController extends Controller
         
         return view('facturas.detalle', compact('factura', 'subtotal', 'descuentoTotal', 'total'));
     }
+
+    /**
+     * Visualizar reporte del día en formato ticket (44mm)
+     */
+    public function visualReporteTicket($date, Request $request)
+    {
+        date_default_timezone_set('America/Bogota'); 
+        
+        $tipo = $request->get('data', 'facturas');
+
+        // Solo facturas activas para los reportes
+        $facturasIds = Factura::whereDate('created_at', $date)
+            ->where('estado', Factura::ESTADO_ACTIVA)
+            ->pluck('id')->toArray();
+        
+        $totalProductos = 0;
+        $totalPrecio = 0; 
+        $detalleCocina = [];
+        $cocinaTotalProductos = 0;
+        $cocinaTotalPrecio = 0;
+        $detalleCocinaAlmu = [];
+        $cocinaTotalProductosAlmu = 0;
+        $cocinaTotalPrecioAlmu = 0;
+        
+        $detalleElementos = DetalleFactura::select('producto_id', 'productos.name','productos.category','detalle_facturas.discount as descuento','detalle_facturas.price as precio', DB::raw('SUM(detalle_facturas.amount) as cantidad'))
+            ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
+            ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
+            ->whereIn('facturas.id', $facturasIds)
+            ->where('facturas.estado', Factura::ESTADO_ACTIVA)
+            ->groupBy('producto_id', 'productos.name','detalle_facturas.price','category','detalle_facturas.discount')
+            ->get();
+       
+        foreach ($detalleElementos as $key => $value) {
+            $totalProductos = $value->cantidad + $totalProductos ;
+            $totalPrecio = ($value->cantidad * ($value->precio - $value->descuento )) +  $totalPrecio ;
+            if($value->category === 'restaurante-bebida' || $value->category === 'restaurante-almuerzos'){
+                $detalleCocina[]=$value;
+                $cocinaTotalProductos = $value->cantidad + $cocinaTotalProductos ;
+                $cocinaTotalPrecio = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecio ;
+            }
+            if($value->category === 'restaurante-almuerzos'){
+                $detalleCocinaAlmu[]=$value;
+                $cocinaTotalProductosAlmu = $value->cantidad + $cocinaTotalProductosAlmu ;
+                $cocinaTotalPrecioAlmu = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecioAlmu ;
+            }
+        }
+
+        // Todas las facturas del día (activas y anuladas) para mostrar en la lista
+        $facturas = Factura::with('mesa')
+            ->whereDate('created_at', $date)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $facturasTotal = 0;
+        foreach ($facturas as $key => $value) {
+            if($value->estado === Factura::ESTADO_ACTIVA) {
+                $facturasTotal = $facturasTotal + $value->valor_pagado;
+            }
+        }
+
+        return view('pdf.reporte-dia-ticket', compact(
+            'facturas',
+            'detalleElementos',
+            'totalProductos',
+            'totalPrecio',
+            'facturasTotal',
+            'detalleCocina',
+            'cocinaTotalProductos',
+            'cocinaTotalPrecio',
+            'detalleCocinaAlmu',
+            'cocinaTotalProductosAlmu',
+            'cocinaTotalPrecioAlmu',
+            'date',
+            'tipo'
+        ))->render();
+    }
 }

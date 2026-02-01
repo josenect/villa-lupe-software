@@ -100,3 +100,6 @@ Route::prefix('admin/facturas')->group(function () {
     //reabrir factura (anular y cargar productos a la mesa)
     Route::post('/reabrir/{facturaId}', [FacturaController::class, 'reabrir'])->name('admin.factura.reabrir');
 });
+
+//Visualizar reporte del día en formato ticket (44mm) para imprimir
+Route::get('visual-reporte/{date}', [FacturaController::class, 'visualReporteTicket'])->name('admin.reporte.ticket');
