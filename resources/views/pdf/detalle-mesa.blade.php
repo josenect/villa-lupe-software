@@ -1,21 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <style>
         /* Definir estilos CSS para el PDF aquí */
+       
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            font-size: 14px;
-
-            
-        }
+            font-family: Arial, sans-serif; /* Fuente estándar compatible */
+            font-size: 12px;
+        }   
 
 
+    
         @media print {
-        thead {
-            display: table-header-group;
-        }
+                @page {
+                    size: 44mm auto; /* Ancho fijo, altura flexible */
+                    margin: 0; /* Elimina márgenes automáticos */
+                }
+
+                body {
+                    width: 44mm;
+                    min-height: 150mm; /* Mínimo de 150mm (ajusta según necesites) */
+                    font-size: 12px;
+                    margin: 0;
+                    padding: 2mm;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between; /* Distribuye contenido */
+                }
+                .content {
+        flex-grow: 1; /* Hace que el contenido crezca para llenar el espacio */
     }
+
+            h1, h2, p {
+                text-align: center;
+                margin: 2px 0;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            th, td {
+                font-size: 12px; /* Ajuste de tamaño de texto */
+                padding: 2px 4px;
+            }
+
+            th {
+                text-align: left;
+            }
+
+            td {
+                text-align: right;
+            }
+
+            /* Opcional: Ajustar la visibilidad de elementos no imprimibles */
+            .no-print {
+                display: none;
+            }
+        }
+
+    
         /* ... Otros estilos ... */
     </style>
 </head>
@@ -46,6 +92,7 @@
                         <!-- ... Otros datos ... -->
                     </tr>
                 @endforeach
+                
                 <tr>
                     <td colspan="3" style="text-align: right;"></td>
                 </tr>

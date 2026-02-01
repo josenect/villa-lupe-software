@@ -1,539 +1,153 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
-<head>
-    <script src="/bookstores/jquery/jquery-3.7.1.min.js.js"></script>
-
-    <!-- Incluir JS de Select2 -->
-    <script src="/bookstores/select2/dist/js/select2.full.min.js"></script>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>{{ $mesa->name }}</title>
-
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-
-    <!-- Styles -->
-    <style>
-        /*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
-        html {
-            line-height: 1.15;
-            -webkit-text-size-adjust: 100%
-        }
-        
-        body {
-            margin: 0
-        }
-
-        a {
-            background-color: transparent
-        }
-
-        [hidden] {
-            display: none
-        }
-
-        html {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
-            line-height: 1.5
-        }
-
-        *,
-        :after,
-        :before {
-            box-sizing: border-box;
-            border: 0 solid #e2e8f0
-        }
-
-        a {
-            color: inherit;
-            text-decoration: inherit
-        }
-
-        svg,
-        video {
-            display: block;
-            vertical-align: middle
-        }
-
-        video {
-            max-width: 100%;
-            height: auto
-        }
-
-        .bg-white {
-            --bg-opacity: 1;
-            background-color: #fff;
-            background-color: rgba(255, 255, 255, var(--bg-opacity))
-        }
-
-        .bg-gray-100 {
-            --bg-opacity: 1;
-            background-color: #f7fafc;
-            background-color: rgba(247, 250, 252, var(--bg-opacity))
-        }
-
-        .border-gray-200 {
-            --border-opacity: 1;
-            border-color: #edf2f7;
-            border-color: rgba(237, 242, 247, var(--border-opacity))
-        }
-
-        .border-t {
-            border-top-width: 1px
-        }
-
-        .flex {
-            display: flex
-        }
-
-        .grid {
-            display: grid
-        }
-
-        .hidden {
-            display: none
-        }
-
-        .items-center {
-            align-items: center
-        }
-
-        .justify-center {
-            justify-content: center
-        }
-
-        .font-semibold {
-            font-weight: 600
-        }
-
-        .h-5 {
-            height: 1.25rem
-        }
-
-        .h-8 {
-            height: 2rem
-        }
-
-        .h-16 {
-            height: 4rem
-        }
-
-        .text-sm {
-            font-size: .875rem
-        }
-
-        .text-lg {
-            font-size: 1.125rem
-        }
-
-        .leading-7 {
-            line-height: 1.75rem
-        }
-
-        .mx-auto {
-            margin-left: auto;
-            margin-right: auto
-        }
-
-        .ml-1 {
-            margin-left: .25rem
-        }
-
-        .mt-2 {
-            margin-top: .5rem
-        }
-
-        .mr-2 {
-            margin-right: .5rem
-        }
-
-        .ml-2 {
-            margin-left: .5rem
-        }
-
-        .mt-4 {
-            margin-top: 1rem
-        }
-
-        .ml-4 {
-            margin-left: 1rem
-        }
-
-        .mt-8 {
-            margin-top: 2rem
-        }
-
-        .ml-12 {
-            margin-left: 3rem
-        }
-
-        .-mt-px {
-            margin-top: -1px
-        }
-
-        .max-w-6xl {
-            max-width: 72rem
-        }
-
-        .min-h-screen {
-            min-height: 100vh
-        }
-
-        .overflow-hidden {
-            overflow: hidden
-        }
-
-        .p-6 {
-            padding: 1.5rem
-        }
-
-        .py-4 {
-            padding-top: 1rem;
-            padding-bottom: 1rem
-        }
-
-        .px-6 {
-            padding-left: 1.5rem;
-            padding-right: 1.5rem
-        }
-
-        .pt-8 {
-            padding-top: 2rem
-        }
-
-        .fixed {
-            position: fixed
-        }
-
-        .relative {
-            position: relative
-        }
-
-        .top-0 {
-            top: 0
-        }
-
-        .right-0 {
-            right: 0
-        }
-
-        .shadow {
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .1), 0 1px 2px 0 rgba(0, 0, 0, .06)
-        }
-
-        .text-center {
-            text-align: center
-        }
-
-        .text-gray-200 {
-            --text-opacity: 1;
-            color: #edf2f7;
-            color: rgba(237, 242, 247, var(--text-opacity))
-        }
-
-        .text-gray-300 {
-            --text-opacity: 1;
-            color: #e2e8f0;
-            color: rgba(226, 232, 240, var(--text-opacity))
-        }
-
-        .text-gray-400 {
-            --text-opacity: 1;
-            color: #cbd5e0;
-            color: rgba(203, 213, 224, var(--text-opacity))
-        }
-
-        .text-gray-500 {
-            --text-opacity: 1;
-            color: #a0aec0;
-            color: rgba(160, 174, 192, var(--text-opacity))
-        }
-
-        .text-gray-600 {
-            --text-opacity: 1;
-            color: #718096;
-            color: rgba(113, 128, 150, var(--text-opacity))
-        }
-
-        .text-gray-700 {
-            --text-opacity: 1;
-            color: #4a5568;
-            color: rgba(74, 85, 104, var(--text-opacity))
-        }
-
-        .text-gray-900 {
-            --text-opacity: 1;
-            color: #1a202c;
-            color: rgba(26, 32, 44, var(--text-opacity))
-        }
-
-        .underline {
-            text-decoration: underline
-        }
-
-        .antialiased {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale
-        }
-
-        .w-5 {
-            width: 1.25rem
-        }
-
-        .w-8 {
-            width: 2rem
-        }
-
-        .w-auto {
-            width: auto
-        }
-
-        .grid-cols-1 {
-            grid-template-columns: repeat(1, minmax(0, 1fr))
-        }
-
-        @media (min-width:640px) {
-            .sm\:rounded-lg {
-                border-radius: .5rem
-            }
-
-            .sm\:block {
-                display: block
-            }
-
-            .sm\:items-center {
-                align-items: center
-            }
-
-            .sm\:justify-start {
-                justify-content: flex-start
-            }
-
-            .sm\:justify-between {
-                justify-content: space-between
-            }
-
-            .sm\:h-20 {
-                height: 5rem
-            }
-
-            .sm\:ml-0 {
-                margin-left: 0
-            }
-
-            .sm\:px-6 {
-                padding-left: 1.5rem;
-                padding-right: 1.5rem
-            }
-
-            .sm\:pt-0 {
-                padding-top: 0
-            }
-
-            .sm\:text-left {
-                text-align: left
-            }
-
-            .sm\:text-right {
-                text-align: right
-            }
-        }
-
-        @media (min-width:768px) {
-            .md\:border-t-0 {
-                border-top-width: 0
-            }
-
-            .md\:border-l {
-                border-left-width: 1px
-            }
-
-            .md\:grid-cols-2 {
-                grid-template-columns: repeat(2, minmax(0, 1fr))
-            }
-        }
-
-        @media (min-width:1024px) {
-            .lg\:px-8 {
-                padding-left: 2rem;
-                padding-right: 2rem
-            }
-        }
-
-        @media (prefers-color-scheme:dark) {
-            .dark\:bg-gray-800 {
-                --bg-opacity: 1;
-                background-color: #2d3748;
-                background-color: rgba(45, 55, 72, var(--bg-opacity))
-            }
-
-            .dark\:bg-gray-900 {
-                --bg-opacity: 1;
-                background-color: #1a202c;
-                background-color: rgba(26, 32, 44, var(--bg-opacity))
-            }
-
-            .dark\:border-gray-700 {
-                --border-opacity: 1;
-                border-color: #4a5568;
-                border-color: rgba(74, 85, 104, var(--border-opacity))
-            }
-
-            .dark\:text-white {
-                --text-opacity: 1;
-                color: #fff;
-                color: rgba(255, 255, 255, var(--text-opacity))
-            }
-
-            .dark\:text-gray-400 {
-                --text-opacity: 1;
-                color: #cbd5e0;
-                color: rgba(203, 213, 224, var(--text-opacity))
-            }
-
-            .dark\:text-gray-500 {
-                --tw-text-opacity: 1;
-                color: #6b7280;
-                color: rgba(107, 114, 128, var(--tw-text-opacity))
-            }
-        }
-        table {
-        width: 100%;
-        border-collapse: collapse;
+@extends('layouts.app')
+
+@section('title', 'Editar Producto - ' . $mesa->name)
+
+@section('styles')
+<link href="/bookstores/select2/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        height: 48px;
+        padding: 8px 12px;
     }
-
-    th, td {
-        padding: 8px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 28px;
+        padding-left: 0;
     }
-
-    tr {
-        background-color: #f2f2f2;
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 46px;
     }
-
-    tr:hover {
-        background-color: #8f8a8a;
+    .select2-dropdown {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
     }
-    th {
-        background-color: #f2f2f2;
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #3498db;
     }
-    </style>
+</style>
+@endsection
 
-    <style>
-        body {
-            font-family: 'Nunito', sans-serif;
-        }
-        
-        .bodystyle  {   
-            background-color: slategrey;
-            padding: 10px;
-        }
-                /* Estilo para hacer que el enlace se parezca a un botón */
-        .btn-like-link {
-            display: inline-block;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-            user-select: none;
-            border: 1px solid transparent;
-            border-radius: 0.25rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            text-decoration: none;
-            background-color: #007bff;
-            color: #fff;
-            cursor: pointer;
-        }
+@section('content')
+<div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+    <h1 class="page-title mb-0">
+        <i class="bi bi-pencil-square"></i> Editar Producto
+    </h1>
+    <a href="{{ route('mesa.show', ['id' => $mesa->id]) }}" class="btn-secondary-custom">
+        <i class="bi bi-arrow-left"></i> Volver a la Mesa
+    </a>
+</div>
 
-        .btn-like-link:hover {
-            background-color: #0056b3;
-            color: #fff;
-        }
-            </style>
-</head>
+@if(session('success'))
+    <div class="alert-custom alert-success-custom fade-in">
+        <i class="bi bi-check-circle-fill fs-5"></i>
+        <span>{{ session('success') }}</span>
+    </div>
+@endif
 
-<body class="antialiased">
-    <div
-        class="relative bodystyle flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
+@if(session('error'))
+    <div class="alert-custom alert-error-custom fade-in">
+        <i class="bi bi-exclamation-circle-fill fs-5"></i>
+        <span>{{ session('error') }}</span>
+    </div>
+@endif
 
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-            <div class="flex justify-center pt-8 sm:justify-start sm:pt-0">
-                <h1 class="center underline text-gray-900 dark:text-white">Información de la Mesa</h1>
+<div class="row g-4">
+    <!-- Info de la Mesa -->
+    <div class="col-md-4">
+        <div class="card-custom h-100 fade-in">
+            <div class="card-header-custom">
+                <h2><i class="bi bi-info-circle"></i> Información</h2>
             </div>
-
-            <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg">
-                <div class="grid grid-cols-1 md:grid-cols-2" style="background-color: lightsteelblue;">
-                    <div class="container">
-                        <div class="card">
-                            <a href="{{ route('mesa.show', ['id' => $mesa->id]) }}" class="btn-like-link">Volver</a>
-
-                            <div class="card-body">
-                                <h2>{{ $mesa->name }}</h2>
-                                <p>Ubicacion: {{ $mesa->location }}</p>
-                                <p>Estado: {{ $mesa->status }}</p>
-                                @if(session('success'))
-                                <div class="alert alert-success">
-                                    {{ session('success') }}
-                                </div>
-                            @endif
-                                <!-- Mostrar más detalles de la mesa aquí -->
-                                <div class="container">
-                                    <h2>Editar Producto en Mesa {{ $mesa->nombre }}</h2>
-                                    <form action="{{ route('update.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <div class="form-group">
-                                            <label for="producto_id">Seleccionar Producto:</label>
-                                            <select  id="product_id" name="producto_id" id="producto_id" class="form-control">
-                                                @foreach ($productos as $p)
-                                                    <option value="{{ $p->id }}" {{ $p->id === $producto->producto_id ? 'selected' : '' }}>{{ $p->name }} - {{ number_format($p->price, 2, ',', '.') }}</option>
-                                                @endforeach
-                                            </select>
-
-                                            <div class="form-group">
-                                                <label for="amount">Cantidad de Productos</label>
-                                                <input type="number" name="amount" class="form-control" value="{{ old('amount', $producto->amount) }}">
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="dicount">Descuento en el Producto</label>
-                                                <input type="number" name="dicount" class="form-control" value="{{ old('dicount', $producto->dicount) }}">
-                                            </div>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary btn-like-link">Guardar Cambios</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        
-                    </div>
-
+            <div class="card-body-custom">
+                <div class="mb-3">
+                    <span class="text-muted">Mesa</span>
+                    <h4 class="mb-0">{{ $mesa->name }}</h4>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted">Ubicación</span>
+                    <p class="mb-0"><i class="bi bi-geo-alt text-primary"></i> {{ $mesa->location }}</p>
+                </div>
+                <div>
+                    <span class="text-muted">Estado</span>
+                    <p class="mb-0">
+                        <span class="status-badge {{ $mesa->status == 'Ocupada' ? 'ocupada' : 'disponible' }}">
+                            {{ $mesa->status }}
+                        </span>
+                    </p>
                 </div>
             </div>
         </div>
-
-
-
     </div>
+    
+    <!-- Formulario de Edición -->
+    <div class="col-md-8">
+        <div class="card-custom fade-in">
+            <div class="card-header-custom">
+                <h2><i class="bi bi-pencil"></i> Editar Producto en Mesa {{ $mesa->name }}</h2>
+            </div>
+            <div class="card-body-custom">
+                <form action="{{ route('update.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="form-group">
+                        <label class="form-label-custom">
+                            <i class="bi bi-box-seam"></i> Producto
+                        </label>
+                        <select id="product_id" name="producto_id" class="form-select-custom">
+                            @foreach ($productos as $p)
+                                <option value="{{ $p->id }}" {{ $p->id === $producto->producto_id ? 'selected' : '' }}>
+                                    {{ $p->name }} - $ {{ number_format($p->price, 0, ',', '.') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-hash"></i> Cantidad
+                                </label>
+                                <input type="number" name="amount" class="form-control-custom" value="{{ old('amount', $producto->amount) }}" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-percent"></i> Descuento por Unidad
+                                </label>
+                                <input type="number" name="dicount" class="form-control-custom" value="{{ old('dicount', $producto->dicount) }}" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn-success-custom">
+                            <i class="bi bi-check-lg"></i> Guardar Cambios
+                        </button>
+                        <a href="{{ route('mesa.show', ['id' => $mesa->id]) }}" class="btn-secondary-custom">
+                            <i class="bi bi-x-lg"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <link href="/bookstores/select2/dist/css/select2.min.css" rel="stylesheet" />
+</div>
+@endsection
 
-  <script>
+@section('scripts')
+<script src="/bookstores/jquery/jquery-3.7.1.min.js.js"></script>
+<script src="/bookstores/select2/dist/js/select2.full.min.js"></script>
+<script>
     $(document).ready(function() {
         $('#product_id').select2({
-            placeholder: "Seleccionar Producto",
+            placeholder: "Buscar producto...",
             allowClear: true,
-            width: '60%' // Ajusta el ancho al 100% del contenedor
+            width: '100%'
         });
     });
 </script>
-</body>
-
-</html>
-
-
+@endsection

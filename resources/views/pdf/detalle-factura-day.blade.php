@@ -1,23 +1,63 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <style>
-        /* Definir estilos CSS para el PDF aquí */
-        body {
-            font-family: "Courier New", monospace;
-            font-size: 13px;
-
-            
-        }
-
-        @media print {
-        thead {
-            display: table-header-group;
-        }
-    }
-        /* ... Otros estilos ... */
-    </style>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            /* Definir estilos CSS para el PDF aquí */
+           
+            body {
+                font-family: Arial, sans-serif; /* Fuente estándar compatible */
+                font-size: 12px;
+            }   
+    
+    
+        
+            @media print {
+                    @page {
+                        size: 44mm auto; /* Ancho fijo, altura flexible */
+                        margin: 0; /* Elimina márgenes automáticos */
+                    }
+    
+                body {
+                    width: 44mm;
+                    font-size: 12px; /* Ajustar el tamaño de fuente */
+                    margin: 0;
+                    padding: 2mm; /* Pequeño margen interno */
+                }
+    
+                h1, h2, p {
+                    text-align: center;
+                    margin: 2px 0;
+                }
+    
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+    
+                th, td {
+                    font-size: 12px; /* Ajuste de tamaño de texto */
+                    padding: 2px 4px;
+                }
+    
+                th {
+                    text-align: left;
+                }
+    
+                td {
+                    text-align: right;
+                }
+    
+                /* Opcional: Ajustar la visibilidad de elementos no imprimibles */
+                .no-print {
+                    display: none;
+                }
+            }
+    
+        
+            /* ... Otros estilos ... */
+        </style>
+    </head>
 <body>
     <div>
         @if(request()->has('data') && request()->get('data') === 'productos')
