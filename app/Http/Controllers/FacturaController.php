@@ -40,7 +40,9 @@ class FacturaController extends Controller
                 $descuentoTotalProducto = $producto->dicount * $producto->amount;
                 $descuentoTotal += $descuentoTotalProducto;
     
-                $producto->delete();
+                // Marcar como facturado (no eliminar para mantener historial)
+                $producto->status = 0;
+                $producto->save();
     
             }
             
@@ -266,7 +268,7 @@ class FacturaController extends Controller
         DB::beginTransaction();
         
         try {
-            // 1. Cargar los productos de la factura a la mesa
+            // 1. Cargar los productos de la factura a la mesa (ya entregados, solo para facturar)
             foreach ($factura->detalleFacturas as $detalle) {
                 $elementTable = new ElementTable();
                 $elementTable->table_id = $factura->table_id;
@@ -276,6 +278,7 @@ class FacturaController extends Controller
                 $elementTable->dicount = $detalle->discount;
                 $elementTable->record = now();
                 $elementTable->status = 1;
+                $elementTable->estado = ElementTable::ESTADO_ENTREGADO; // Ya fueron entregados, no van a cocina
                 $elementTable->save();
             }
             

@@ -18,6 +18,7 @@ class ElementTable extends Model
     const ESTADO_PENDIENTE = 'pendiente';
     const ESTADO_EN_COCINA = 'en_cocina';
     const ESTADO_LISTO = 'listo';
+    const ESTADO_ENTREGADO = 'entregado';
     const ESTADO_CANCELACION_SOLICITADA = 'cancelacion_solicitada';
     const ESTADO_CANCELADO = 'cancelado';
 

@@ -225,16 +225,19 @@ class MeseroPedidosController extends Controller
      */
     private function getPedidosEntregadosHoy($userId, $esCocina = true)
     {
+        // Usar las últimas 24 horas para evitar problemas de zona horaria
+        $desde = now()->subHours(24);
+        
         $query = ElementTable::with(['producto', 'mesa'])
             ->where('user_id', $userId)
-            ->whereDate('updated_at', today())
+            ->where('updated_at', '>=', $desde)
             ->where(function($q) {
                 // Entregados pendientes de facturar
                 $q->where(function($sub) {
                     $sub->where('status', 1)
                         ->where('estado', ElementTable::ESTADO_ENTREGADO);
                 })
-                // O ya facturados hoy
+                // O ya facturados
                 ->orWhere('status', 0);
             });
             
