@@ -23,9 +23,10 @@ class CocinaController extends Controller
     {
         $pedidos = $this->getPedidosPendientes();
         $pedidosListos = $this->getPedidosListos();
+        $pedidosEntregados = $this->getPedidosEntregadosHoy();
         $refreshTime = self::REFRESH_TIME;
 
-        return view('cocina.index', compact('pedidos', 'pedidosListos', 'refreshTime'));
+        return view('cocina.index', compact('pedidos', 'pedidosListos', 'pedidosEntregados', 'refreshTime'));
     }
 
     /**
@@ -35,6 +36,7 @@ class CocinaController extends Controller
     {
         $pedidos = $this->getPedidosPendientes();
         $pedidosListos = $this->getPedidosListos();
+        $pedidosEntregados = $this->getPedidosEntregadosHoy();
 
         return response()->json([
             'pedidos' => $pedidos->map(function ($pedido) {
@@ -60,10 +62,22 @@ class CocinaController extends Controller
                     'mesero_nombre' => $pedido->usuario->name ?? 'N/A',
                 ];
             }),
+            'pedidosEntregados' => $pedidosEntregados->map(function ($pedido) {
+                return [
+                    'id' => $pedido->id,
+                    'amount' => $pedido->amount,
+                    'producto_nombre' => $pedido->producto->name,
+                    'mesa_nombre' => $pedido->mesa->name ?? 'Mesa',
+                    'mesero_nombre' => $pedido->usuario->name ?? 'N/A',
+                    'updated_at' => $pedido->updated_at->format('H:i'),
+                    'facturado' => $pedido->status == 0,
+                ];
+            }),
             'contadores' => [
                 'pendientes' => $pedidos->where('estado', 'pendiente')->count(),
                 'en_cocina' => $pedidos->where('estado', 'en_cocina')->count(),
                 'listos' => $pedidosListos->count(),
+                'entregados' => $pedidosEntregados->count(),
             ]
         ]);
     }
@@ -99,6 +113,31 @@ class CocinaController extends Controller
             })
             ->orderBy('updated_at', 'desc')
             ->limit(10)
+            ->get();
+    }
+
+    /**
+     * Obtener pedidos entregados hoy (últimas 24 horas)
+     */
+    private function getPedidosEntregadosHoy()
+    {
+        $desde = now()->subHours(24);
+        
+        return ElementTable::with(['producto', 'mesa', 'usuario'])
+            ->where('updated_at', '>=', $desde)
+            ->where(function($q) {
+                // Entregados pendientes de facturar
+                $q->where(function($sub) {
+                    $sub->where('status', 1)
+                        ->where('estado', ElementTable::ESTADO_ENTREGADO);
+                })
+                // O ya facturados
+                ->orWhere('status', 0);
+            })
+            ->whereHas('producto', function ($query) {
+                $query->whereIn('category', self::CATEGORIAS_COCINA);
+            })
+            ->orderBy('updated_at', 'desc')
             ->get();
     }
 

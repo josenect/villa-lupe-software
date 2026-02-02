@@ -208,31 +208,40 @@
 @endif
 
 <!-- Resumen -->
-<div class="row g-4 mb-4 fade-in">
-    <div class="col-md-4">
+<div class="row g-3 mb-4 fade-in">
+    <div class="col-6 col-md-3">
         <div class="card-custom h-100">
-            <div class="card-body-custom text-center">
-                <i class="bi bi-clock text-warning" style="font-size: 2.5rem;"></i>
-                <h2 class="contador-pedidos text-warning mt-2 mb-0" id="contador-pendientes">{{ $pedidos->where('estado', 'pendiente')->count() }}</h2>
-                <p class="text-muted mb-0">Pendientes</p>
+            <div class="card-body-custom text-center py-2">
+                <i class="bi bi-clock text-warning" style="font-size: 2rem;"></i>
+                <h2 class="contador-pedidos text-warning mt-1 mb-0" id="contador-pendientes">{{ $pedidos->where('estado', 'pendiente')->count() }}</h2>
+                <p class="text-muted mb-0 small">Pendientes</p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-6 col-md-3">
         <div class="card-custom h-100">
-            <div class="card-body-custom text-center">
-                <i class="bi bi-fire text-danger" style="font-size: 2.5rem;"></i>
-                <h2 class="contador-pedidos text-danger mt-2 mb-0" id="contador-encocina">{{ $pedidos->where('estado', 'en_cocina')->count() }}</h2>
-                <p class="text-muted mb-0">En Cocina</p>
+            <div class="card-body-custom text-center py-2">
+                <i class="bi bi-fire text-danger" style="font-size: 2rem;"></i>
+                <h2 class="contador-pedidos text-danger mt-1 mb-0" id="contador-encocina">{{ $pedidos->where('estado', 'en_cocina')->count() }}</h2>
+                <p class="text-muted mb-0 small">En Cocina</p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-6 col-md-3">
         <div class="card-custom h-100">
-            <div class="card-body-custom text-center">
-                <i class="bi bi-check-circle text-success" style="font-size: 2.5rem;"></i>
-                <h2 class="contador-pedidos text-success mt-2 mb-0" id="contador-listos">{{ $pedidosListos->count() }}</h2>
-                <p class="text-muted mb-0">Listos (últimos)</p>
+            <div class="card-body-custom text-center py-2">
+                <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                <h2 class="contador-pedidos text-success mt-1 mb-0" id="contador-listos">{{ $pedidosListos->count() }}</h2>
+                <p class="text-muted mb-0 small">Listos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card-custom h-100">
+            <div class="card-body-custom text-center py-2">
+                <i class="bi bi-check2-all text-secondary" style="font-size: 2rem;"></i>
+                <h2 class="contador-pedidos text-secondary mt-1 mb-0" id="contador-entregados">{{ $pedidosEntregados->count() }}</h2>
+                <p class="text-muted mb-0 small">Entregados</p>
             </div>
         </div>
     </div>
@@ -328,6 +337,41 @@
                             {{ $pedido->producto->name }}
                             <small class="text-muted">${{ number_format($pedido->producto->price, 0, ',', '.') }}</small>
                         </h5>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+</div>
+
+<!-- Pedidos Entregados Hoy -->
+<div id="pedidos-entregados-section" class="mt-4">
+@if($pedidosEntregados->count() > 0)
+<div class="card-custom fade-in">
+    <div class="card-header-custom" style="background: linear-gradient(135deg, #6c757d, #495057) !important;">
+        <h2><i class="bi bi-check2-all"></i> Entregados Hoy (<span id="entregados-count">{{ $pedidosEntregados->count() }}</span>)</h2>
+    </div>
+    <div class="card-body-custom" style="max-height: 300px; overflow-y: auto;">
+        <div class="row" id="entregados-container">
+            @foreach ($pedidosEntregados as $pedido)
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                    <div class="pedido-card" style="border-left-color: {{ $pedido->status == 0 ? '#6c757d' : '#3498db' }}; opacity: {{ $pedido->status == 0 ? '0.7' : '0.9' }}; padding: 0.75rem;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-primary">{{ $pedido->mesa->name ?? 'Mesa' }}</span>
+                                @if($pedido->status == 0)
+                                    <span class="badge bg-secondary"><i class="bi bi-receipt"></i></span>
+                                @endif
+                            </div>
+                            <small class="text-muted">{{ $pedido->updated_at->format('H:i') }}</small>
+                        </div>
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">{{ $pedido->amount }}x</span>
+                            <strong>{{ $pedido->producto->name }}</strong>
+                        </div>
+                        <small class="text-info"><i class="bi bi-person"></i> {{ $pedido->usuario->name ?? 'N/A' }}</small>
                     </div>
                 </div>
             @endforeach
@@ -488,6 +532,7 @@
             actualizarContadores(data.contadores);
             actualizarPedidosPendientes(data.pedidos);
             actualizarPedidosListos(data.pedidosListos);
+            actualizarPedidosEntregados(data.pedidosEntregados);
         })
         .catch(error => console.error('Error al cargar pedidos:', error));
     }
@@ -497,6 +542,7 @@
         document.getElementById('contador-pendientes').textContent = contadores.pendientes;
         document.getElementById('contador-encocina').textContent = contadores.en_cocina;
         document.getElementById('contador-listos').textContent = contadores.listos;
+        document.getElementById('contador-entregados').textContent = contadores.entregados;
     }
 
     // Generar HTML de un pedido pendiente
@@ -627,6 +673,56 @@
             `;
             pedidosListos.forEach(pedido => {
                 html += generarPedidoListoHTML(pedido);
+            });
+            html += '</div></div></div>';
+            section.innerHTML = html;
+        } else {
+            section.innerHTML = '';
+        }
+    }
+
+    // Generar HTML de un pedido entregado
+    function generarPedidoEntregadoHTML(pedido) {
+        const borderColor = pedido.facturado ? '#6c757d' : '#3498db';
+        const opacity = pedido.facturado ? '0.7' : '0.9';
+        const factIcon = pedido.facturado ? '<span class="badge bg-secondary"><i class="bi bi-receipt"></i></span>' : '';
+        
+        return `
+            <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="pedido-card" style="border-left-color: ${borderColor}; opacity: ${opacity}; padding: 0.75rem;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-primary">${pedido.mesa_nombre}</span>
+                            ${factIcon}
+                        </div>
+                        <small class="text-muted">${pedido.updated_at}</small>
+                    </div>
+                    <div class="mt-1">
+                        <span class="badge bg-secondary">${pedido.amount}x</span>
+                        <strong>${pedido.producto_nombre}</strong>
+                    </div>
+                    <small class="text-info"><i class="bi bi-person"></i> ${pedido.mesero_nombre}</small>
+                </div>
+            </div>
+        `;
+    }
+
+    // Actualizar lista de pedidos entregados
+    function actualizarPedidosEntregados(pedidosEntregados) {
+        const section = document.getElementById('pedidos-entregados-section');
+        const countEl = document.getElementById('entregados-count');
+        
+        if (pedidosEntregados.length > 0) {
+            let html = `
+                <div class="card-custom fade-in">
+                    <div class="card-header-custom" style="background: linear-gradient(135deg, #6c757d, #495057) !important;">
+                        <h2><i class="bi bi-check2-all"></i> Entregados Hoy (<span id="entregados-count">${pedidosEntregados.length}</span>)</h2>
+                    </div>
+                    <div class="card-body-custom" style="max-height: 300px; overflow-y: auto;">
+                        <div class="row" id="entregados-container">
+            `;
+            pedidosEntregados.forEach(pedido => {
+                html += generarPedidoEntregadoHTML(pedido);
             });
             html += '</div></div></div>';
             section.innerHTML = html;
