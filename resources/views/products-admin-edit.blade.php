@@ -51,6 +51,7 @@
                             <option value="restaurante" {{ $product->category == "restaurante" ? 'selected' : '' }}>Restaurante</option>
                             <option value="restaurante-almuerzos" {{ $product->category == "restaurante-almuerzos" ? 'selected' : '' }}>Restaurante Almuerzos</option>
                             <option value="restaurante-bebida" {{ $product->category == "restaurante-bebida" ? 'selected' : '' }}>Restaurante Bebidas</option>
+                            <option value="restaurante-adicional" {{ $product->category == "restaurante-adicional" ? 'selected' : '' }}>Restaurante Adicional</option>
                             <option value="caseta" {{ $product->category == "caseta" ? 'selected' : '' }}>Caseta</option>
                         </select>
                     </div>

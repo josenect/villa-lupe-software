@@ -79,12 +79,19 @@
         </thead>
         <tbody>
             @foreach ($productosTable as $producto)
+                @if($producto->estado !== 'cancelacion_solicitada' && $producto->estado !== 'cancelado')
                 <tr>
                     <td style="text-align:left;">{{ $producto->amount }}</td>
                     <td style="text-align:left;">{{ $producto->producto->name }}</td>
                     <td style="text-align:right;">{{ number_format(($producto->price - $producto->dicount), 0, ',', '.') }}</td>
                     <td style="text-align:right;">{{ number_format(($producto->price - $producto->dicount) * $producto->amount, 0, ',', '.') }}</td>
                 </tr>
+                @if($producto->observacion)
+                <tr>
+                    <td colspan="4" style="text-align:left; font-size: 11px; padding-left: 10px;"><em>* {{ $producto->observacion }}</em></td>
+                </tr>
+                @endif
+                @endif
             @endforeach
             <tr>
                 <td colspan="4" style="text-align:center;">--------------------------------</td>

@@ -125,6 +125,7 @@
                             <option value="">Seleccionar categoría</option>
                             <option value="restaurante-almuerzos">Restaurante Almuerzos</option>
                             <option value="restaurante-bebida">Restaurante Bebidas</option>
+                            <option value="restaurante-adicional">Restaurante Adicional</option>
                             <option value="caseta">Caseta</option>
                         </select>
                     </div>

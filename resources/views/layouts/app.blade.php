@@ -511,7 +511,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand" href="@auth @if(auth()->user()->esCocina()) {{ route('cocina.index') }} @else / @endif @else / @endauth">
                 <i class="bi bi-shop"></i> Villa Lupe
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -519,53 +519,111 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="/">
-                            <i class="bi bi-house-door"></i> Inicio
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('admin/mesas*') ? 'active' : '' }}" href="/admin/mesas">
-                            <i class="bi bi-grid-3x3"></i> Mesas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('admin/productos*') ? 'active' : '' }}" href="/admin/productos">
-                            <i class="bi bi-box-seam"></i> Productos
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {{ request()->is('admin/facturas*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-receipt"></i> Reportes
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}">
-                                    <i class="bi bi-calendar-day"></i> Facturas del Dia
+                    @auth
+                        @if(auth()->user()->esAdmin() || auth()->user()->esMesero())
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="/">
+                                    <i class="bi bi-house-door"></i> Inicio
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}?data=productos">
-                                    <i class="bi bi-bar-chart"></i> Reporte Productos
+                        @endif
+                        
+                        @if(auth()->user()->esAdmin())
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/mesas*') ? 'active' : '' }}" href="/admin/mesas">
+                                    <i class="bi bi-grid-3x3"></i> Mesas
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}?data=cocina">
-                                    <i class="bi bi-egg-fried"></i> Reporte Cocina Almuerzos
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/productos*') ? 'active' : '' }}" href="/admin/productos">
+                                    <i class="bi bi-box-seam"></i> Productos
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}?data=cocina-productos">
-                                    <i class="bi bi-cup-hot"></i> Reporte Cocina Productos
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->is('admin/facturas*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-receipt"></i> Reportes
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}">
+                                            <i class="bi bi-calendar-day"></i> Facturas del Día
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}?data=productos">
+                                            <i class="bi bi-bar-chart"></i> Reporte Productos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}?data=cocina">
+                                            <i class="bi bi-egg-fried"></i> Reporte Cocina
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/usuarios*') ? 'active' : '' }}" href="{{ route('admin.usuarios.index') }}">
+                                    <i class="bi bi-people"></i> Usuarios
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="/admin/facturas/{{ date('Y-m-d') }}?data=facturas">
-                                    <i class="bi bi-file-earmark-text"></i> Reporte Facturas
+                            @php
+                                $cancelacionesPendientes = \App\Models\ElementTable::where('estado', 'cancelacion_solicitada')->count();
+                            @endphp
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/cancelaciones*') ? 'active' : '' }}" href="{{ route('admin.cancelaciones.pendientes') }}" style="{{ $cancelacionesPendientes > 0 ? 'color: #e74c3c !important;' : '' }}">
+                                    <i class="bi bi-x-circle"></i>
+                                    @if($cancelacionesPendientes > 0)
+                                        <span class="badge bg-danger">{{ $cancelacionesPendientes }}</span>
+                                    @endif
                                 </a>
                             </li>
-                        </ul>
-                    </li>
+                        @endif
+                        
+                        @if(auth()->user()->esCocina() || auth()->user()->esAdmin())
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('cocina*') ? 'active' : '' }}" href="{{ route('cocina.index') }}">
+                                    <i class="bi bi-egg-fried"></i> Cocina
+                                </a>
+                            </li>
+                        @endif
+                        
+                        <!-- Usuario y Logout -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> {{ auth()->user()->name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <span class="dropdown-item-text">
+                                        <small class="text-muted">
+                                            @if(auth()->user()->esAdmin())
+                                                <i class="bi bi-shield-check"></i> Administrador
+                                            @elseif(auth()->user()->esMesero())
+                                                <i class="bi bi-person-badge"></i> Mesero
+                                            @else
+                                                <i class="bi bi-egg-fried"></i> Cocina
+                                            @endif
+                                        </small>
+                                    </span>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ route('logout') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    @else
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('login') }}">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                            </a>
+                        </li>
+                    @endauth
                 </ul>
             </div>
         </div>

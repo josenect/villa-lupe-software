@@ -10,6 +10,7 @@ class Factura extends Model
 
     protected $fillable = [
         'table_id',
+        'user_id',
         'numero_factura',
         'valor_total',
         'valor_propina',
@@ -38,6 +39,12 @@ class Factura extends Model
     public function mesa()
     {
         return $this->belongsTo(Table::class, 'table_id');
+    }
+
+    // Relación con el usuario que generó la factura
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // Verificar si la factura está activa

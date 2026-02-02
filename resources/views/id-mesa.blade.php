@@ -66,6 +66,13 @@
     </div>
 @endif
 
+@if(session('error'))
+    <div class="alert-custom alert-error-custom fade-in">
+        <i class="bi bi-exclamation-circle-fill fs-5"></i>
+        <span>{{ session('error') }}</span>
+    </div>
+@endif
+
 <!-- Info de la Mesa -->
 <div class="row g-4 mb-4 fade-in">
     <div class="col-md-8">
@@ -86,15 +93,19 @@
                         <div class="action-buttons justify-content-md-end">
                             @if($productosTable->count() > 0)
                                 <a target="_blank" href="/visual-pdf-pre/{{ $mesa->id }}" class="btn-warning-custom">
-                                    <i class="bi bi-file-earmark-pdf"></i> Factura Preliminar
+                                    <i class="bi bi-printer"></i> Imprimir Preliminar
                                 </a>
-                                <a href="#" id="generar-factura-btn" data-mesa-id="{{ $mesa->id }}" class="btn-success-custom">
-                                    <i class="bi bi-receipt"></i> Generar Factura
-                                </a>
+                                @if(auth()->user() && auth()->user()->esAdmin())
+                                    <a href="#" id="generar-factura-btn" data-mesa-id="{{ $mesa->id }}" class="btn-success-custom">
+                                        <i class="bi bi-receipt"></i> Generar Factura
+                                    </a>
+                                @endif
                             @else
-                                <a target="_blank" href="/generar-factura/{{ $mesa->id }}" class="btn-primary-custom">
-                                    <i class="bi bi-eye"></i> Ver Última Factura
-                                </a>
+                                @if(auth()->user() && auth()->user()->esAdmin())
+                                    <a target="_blank" href="/generar-factura/{{ $mesa->id }}" class="btn-primary-custom">
+                                        <i class="bi bi-eye"></i> Ver Última Factura
+                                    </a>
+                                @endif
                             @endif
                         </div>
                     </div>
@@ -125,7 +136,7 @@
         <form action="{{ route('add.product.table', ['mesa_id' => $mesa->id]) }}" method="POST">
             @csrf
             <div class="row g-3">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
                             <i class="bi bi-box-seam"></i> Seleccione un producto
@@ -138,7 +149,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
                             <i class="bi bi-hash"></i> Cantidad
@@ -146,12 +157,20 @@
                         <input type="number" name="amount" class="form-control-custom" min="1" value="1" required>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
-                            <i class="bi bi-percent"></i> Descuento
+                            <i class="bi bi-percent"></i> Desc.
                         </label>
                         <input type="number" name="dicount" class="form-control-custom" min="0" value="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label-custom">
+                            <i class="bi bi-chat-dots"></i> Observación
+                        </label>
+                        <input type="text" name="observacion" class="form-control-custom" placeholder="Ej: Sin cebolla, término medio...">
                     </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
@@ -271,39 +290,64 @@
                     <thead>
                         <tr>
                             <th><i class="bi bi-box"></i> Producto</th>
-                            <th><i class="bi bi-hash"></i> Cantidad</th>
-                            <th><i class="bi bi-currency-dollar"></i> Precio</th>
-                            <th><i class="bi bi-percent"></i> Desc. Unit.</th>
-                            <th><i class="bi bi-calculator"></i> Subtotal</th>
-                            <th><i class="bi bi-dash-circle"></i> Descuento</th>
+                            <th><i class="bi bi-hash"></i> Cant.</th>
                             <th><i class="bi bi-cash-stack"></i> Total</th>
-                            <th><i class="bi bi-calendar"></i> Fecha</th>
+                            <th><i class="bi bi-chat-dots"></i> Observación</th>
+                            <th><i class="bi bi-flag"></i> Estado</th>
                             <th><i class="bi bi-gear"></i> Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($productosTable as $producto)
-                            <tr>
+                            <tr class="{{ $producto->estado === 'cancelacion_solicitada' ? 'table-warning' : '' }}">
                                 <td><strong>{{ $producto->producto->name }}</strong></td>
                                 <td>
                                     <span class="badge bg-secondary">{{ $producto->amount }}</span>
                                 </td>
-                                <td>$ {{ number_format($producto->price, 0, ',', '.') }}</td>
-                                <td>$ {{ number_format($producto->dicount, 0, ',', '.') }}</td>
-                                <td>$ {{ number_format($producto->price * $producto->amount, 0, ',', '.') }}</td>
-                                <td class="text-danger">- $ {{ number_format($producto->dicount * $producto->amount, 0, ',', '.') }}</td>
                                 <td><strong>$ {{ number_format(($producto->price - $producto->dicount) * $producto->amount, 0, ',', '.') }}</strong></td>
                                 <td>
-                                    <small class="text-muted">{{ date('Y-m-d g:i A', strtotime($producto->record)) }}</small>
+                                    @if($producto->observacion)
+                                        <small class="text-info"><i class="bi bi-chat-dots"></i> {{ $producto->observacion }}</small>
+                                    @else
+                                        <small class="text-muted">-</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @switch($producto->estado)
+                                        @case('pendiente')
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pendiente</span>
+                                            @break
+                                        @case('en_cocina')
+                                            <span class="badge bg-info"><i class="bi bi-fire"></i> En Cocina</span>
+                                            @break
+                                        @case('listo')
+                                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Listo</span>
+                                            @break
+                                        @case('cancelacion_solicitada')
+                                            <span class="badge bg-danger"><i class="bi bi-hourglass-split"></i> Cancel. Solicitada</span>
+                                            @break
+                                        @default
+                                            <span class="badge bg-secondary">{{ $producto->estado }}</span>
+                                    @endswitch
                                 </td>
                                 <td>
                                     <div class="action-buttons">
-                                        <a class="btn-primary-custom btn-sm-custom" href="{{ route('show.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a class="btn-danger-custom btn-sm-custom" href="{{ route('delete.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" onclick="return confirm('¿Está seguro de eliminar este producto?')">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
+                                        @if($producto->estado !== 'cancelacion_solicitada')
+                                            <a class="btn-primary-custom btn-sm-custom" href="{{ route('show.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            @if(auth()->user() && auth()->user()->esAdmin())
+                                                <a class="btn-danger-custom btn-sm-custom" href="{{ route('delete.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" onclick="return confirm('¿Está seguro de eliminar este producto?')" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            @else
+                                                <button type="button" class="btn-warning-custom btn-sm-custom btn-cancelar" data-id="{{ $producto->id }}" data-nombre="{{ $producto->producto->name }}" title="Solicitar Cancelación">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            @endif
+                                        @else
+                                            <small class="text-muted">Esperando aprobación...</small>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -311,12 +355,10 @@
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td colspan="4" class="text-end"><strong>TOTALES:</strong></td>
-                            <td>$ {{ number_format($subtotal, 0, ',', '.') }}</td>
-                            <td>- $ {{ number_format($descuentoTotal, 0, ',', '.') }}</td>
+                            <td colspan="2" class="text-end"><strong>TOTAL:</strong></td>
                             <td><strong>$ {{ number_format($total, 0, ',', '.') }}</strong></td>
-                            <td colspan="2">
-                                <small>Propina: $ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</small>
+                            <td colspan="3">
+                                <small>Propina sugerida: $ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</small>
                             </td>
                         </tr>
                     </tfoot>
@@ -328,6 +370,41 @@
                 <p class="text-muted mt-3">No hay productos agregados a esta mesa</p>
             </div>
         @endif
+    </div>
+</div>
+
+<!-- Modal Solicitar Cancelación -->
+<div class="modal fade" id="modalCancelar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title"><i class="bi bi-x-circle"></i> Solicitar Cancelación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formCancelar" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <p>¿Desea solicitar la cancelación de: <strong id="nombreProductoCancelar"></strong>?</p>
+                    <div class="form-group">
+                        <label class="form-label-custom"><i class="bi bi-chat-text"></i> Motivo de cancelación</label>
+                        <select name="motivo" class="form-select-custom" required>
+                            <option value="">Seleccione un motivo</option>
+                            <option value="Cliente ya no lo quiere">Cliente ya no lo quiere</option>
+                            <option value="Se demoró mucho">Se demoró mucho</option>
+                            <option value="Error al pedir">Error al pedir</option>
+                            <option value="Se dañó en cocina">Se dañó en cocina</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border: none;">
+                    <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-danger-custom">
+                        <i class="bi bi-send"></i> Enviar Solicitud
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection
@@ -423,6 +500,18 @@
         
         var url = '/generar-factura/' + mesaId + '?propina=' + propina + '&efectivo=' + efectivo + '&transferencia=' + transferencia + '&medio_pago=' + encodeURIComponent(metodoPago);
         window.location.href = url;
+    });
+    
+    // Modal de cancelación
+    document.querySelectorAll('.btn-cancelar').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            var nombre = this.getAttribute('data-nombre');
+            document.getElementById('nombreProductoCancelar').textContent = nombre;
+            document.getElementById('formCancelar').action = '/mesa/{{ $mesa->id }}/productos/' + id + '/solicitar-cancelacion';
+            var modal = new bootstrap.Modal(document.getElementById('modalCancelar'));
+            modal.show();
+        });
     });
 </script>
 @endsection

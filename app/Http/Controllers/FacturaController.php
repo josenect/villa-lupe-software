@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\ElementTable;
 use App\Models\DetalleFactura;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 
 class FacturaController extends Controller
@@ -53,6 +54,7 @@ class FacturaController extends Controller
             $factura->numero_factura = $numeroFactura ;
             $factura->valor_total = $total;
             $factura->table_id = $mesaId;
+            $factura->user_id = Auth::id();
             $factura->valor_propina = $propina;
             $factura->valor_pagado = $total + $propina;
             $factura->valor_efectivo = $valorEfectivo;

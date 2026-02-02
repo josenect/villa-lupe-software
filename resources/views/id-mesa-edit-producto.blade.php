@@ -123,6 +123,13 @@
                         </div>
                     </div>
                     
+                    <div class="form-group">
+                        <label class="form-label-custom">
+                            <i class="bi bi-chat-dots"></i> Observación
+                        </label>
+                        <input type="text" name="observacion" class="form-control-custom" value="{{ old('observacion', $producto->observacion) }}" placeholder="Ej: Sin cebolla, término medio...">
+                    </div>
+                    
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" class="btn-success-custom">
                             <i class="bi bi-check-lg"></i> Guardar Cambios
