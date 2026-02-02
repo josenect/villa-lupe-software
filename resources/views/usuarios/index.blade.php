@@ -34,29 +34,29 @@
     <div class="card-body-custom">
         <form action="{{ route('admin.usuarios.store') }}" method="POST">
             @csrf
-            <div class="row g-3">
-                <div class="col-md-3">
+            <div class="row g-2 g-md-3">
+                <div class="col-12 col-md-3">
                     <label class="form-label-custom"><i class="bi bi-person"></i> Nombre</label>
                     <input type="text" name="name" class="form-control-custom" placeholder="Nombre completo" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <label class="form-label-custom"><i class="bi bi-envelope"></i> Email</label>
                     <input type="email" name="email" class="form-control-custom" placeholder="correo@ejemplo.com" required>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label-custom"><i class="bi bi-key"></i> Contraseña</label>
                     <input type="password" name="password" class="form-control-custom" placeholder="••••••" required>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label-custom"><i class="bi bi-shield"></i> Rol</label>
                     <select name="rol" class="form-select-custom" required>
                         <option value="mesero">Mesero</option>
                         <option value="cocina">Cocina</option>
-                        <option value="admin">Administrador</option>
+                        <option value="admin">Admin</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn-success-custom w-100 justify-content-center">
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn-success-custom w-100 justify-content-center" style="min-height: 48px;">
                         <i class="bi bi-plus-lg"></i> Crear
                     </button>
                 </div>
@@ -86,9 +86,9 @@
                     <tbody>
                         @foreach ($usuarios as $usuario)
                             <tr class="{{ !$usuario->activo ? 'table-secondary' : '' }}">
-                                <td><strong>{{ $usuario->name }}</strong></td>
-                                <td>{{ $usuario->email }}</td>
-                                <td>
+                                <td data-label="Nombre"><strong>{{ $usuario->name }}</strong></td>
+                                <td data-label="Email">{{ $usuario->email }}</td>
+                                <td data-label="Rol">
                                     @if($usuario->rol === 'admin')
                                         <span class="badge bg-danger"><i class="bi bi-shield-check"></i> Admin</span>
                                     @elseif($usuario->rol === 'mesero')
@@ -97,14 +97,14 @@
                                         <span class="badge bg-warning text-dark"><i class="bi bi-egg-fried"></i> Cocina</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td data-label="Estado">
                                     @if($usuario->activo)
                                         <span class="status-badge activo"><i class="bi bi-check-circle"></i> Activo</span>
                                     @else
                                         <span class="status-badge inactivo"><i class="bi bi-x-circle"></i> Inactivo</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td data-label="Acciones">
                                     <div class="action-buttons">
                                         <a href="{{ route('admin.usuarios.edit', $usuario->id) }}" class="btn-primary-custom btn-sm-custom" title="Editar">
                                             <i class="bi bi-pencil"></i>

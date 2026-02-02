@@ -47,6 +47,7 @@ class CocinaController extends Controller
                     'producto_nombre' => $pedido->producto->name,
                     'producto_precio' => number_format($pedido->producto->price, 0, ',', '.'),
                     'mesa_nombre' => $pedido->mesa->name ?? 'Mesa',
+                    'mesero_nombre' => $pedido->usuario->name ?? 'N/A',
                 ];
             }),
             'pedidosListos' => $pedidosListos->map(function ($pedido) {
@@ -56,6 +57,7 @@ class CocinaController extends Controller
                     'producto_nombre' => $pedido->producto->name,
                     'producto_precio' => number_format($pedido->producto->price, 0, ',', '.'),
                     'mesa_nombre' => $pedido->mesa->name ?? 'Mesa',
+                    'mesero_nombre' => $pedido->usuario->name ?? 'N/A',
                 ];
             }),
             'contadores' => [
@@ -71,7 +73,7 @@ class CocinaController extends Controller
      */
     private function getPedidosPendientes()
     {
-        return ElementTable::with(['producto', 'mesa'])
+        return ElementTable::with(['producto', 'mesa', 'usuario'])
             ->where('status', 1)
             ->whereIn('estado', [
                 ElementTable::ESTADO_PENDIENTE,
@@ -89,7 +91,7 @@ class CocinaController extends Controller
      */
     private function getPedidosListos()
     {
-        return ElementTable::with(['producto', 'mesa'])
+        return ElementTable::with(['producto', 'mesa', 'usuario'])
             ->where('status', 1)
             ->where('estado', ElementTable::ESTADO_LISTO)
             ->whereHas('producto', function ($query) {

@@ -10,6 +10,7 @@ use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CocinaController;
+use App\Http\Controllers\MeseroPedidosController;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Route;
 
@@ -128,6 +129,14 @@ Route::middleware(['role'])->group(function () {
         Route::get('/cocina/pedidos', [CocinaController::class, 'getPedidosAjax'])->name('cocina.pedidos');
         Route::post('/cocina/{id}/listo', [CocinaController::class, 'marcarListo'])->name('cocina.listo');
         Route::post('/cocina/{id}/en-cocina', [CocinaController::class, 'marcarEnCocina'])->name('cocina.enCocina');
+    });
+
+    // ==================== RUTAS PARA MESERO (Mis Pedidos) ====================
+    
+    Route::middleware(['role:admin,mesero'])->group(function () {
+        Route::get('/mesero/pedidos', [MeseroPedidosController::class, 'index'])->name('mesero.pedidos');
+        Route::get('/mesero/pedidos/ajax', [MeseroPedidosController::class, 'getPedidosAjax'])->name('mesero.pedidos.ajax');
+        Route::post('/mesero/pedidos/{id}/entregado', [MeseroPedidosController::class, 'marcarEntregado'])->name('mesero.pedido.entregado');
     });
 
 });

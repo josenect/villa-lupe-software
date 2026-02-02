@@ -50,21 +50,21 @@
                             <tbody>
                                 @foreach ($products as $product)
                                     <tr>
-                                        <td>
+                                        <td data-label="Nombre">
                                             <strong><i class="bi bi-box text-primary"></i> {{ $product->name }}</strong>
                                         </td>
-                                        <td>
+                                        <td data-label="Categoría">
                                             <span class="badge bg-info">{{ $product->category }}</span>
                                         </td>
-                                        <td>
+                                        <td data-label="Precio">
                                             <strong class="text-success">$ {{ number_format($product->price, 0, ',', '.') }}</strong>
                                         </td>
-                                        <td>
+                                        <td data-label="Inventario">
                                             <span class="badge {{ $product->inventory > 10 ? 'bg-success' : ($product->inventory > 0 ? 'bg-warning' : 'bg-danger') }}">
                                                 {{ $product->inventory }}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Estado">
                                             @if($product->status == 1)
                                                 <span class="status-badge activo">
                                                     <i class="bi bi-check-circle"></i> Activo
@@ -75,12 +75,12 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td data-label="Acciones">
                                             <div class="action-buttons">
-                                                <a class="btn-primary-custom btn-sm-custom" href="{{ route('admin.products.show', ['product_id' => $product->id]) }}">
+                                                <a class="btn-primary-custom btn-sm-custom" href="{{ route('admin.products.show', ['product_id' => $product->id]) }}" title="Editar">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <a class="btn-danger-custom btn-sm-custom" href="{{ route('admin.products.delete', ['product_id' => $product->id]) }}" onclick="return confirm('¿Está seguro de eliminar este producto?')">
+                                                <a class="btn-danger-custom btn-sm-custom" href="{{ route('admin.products.delete', ['product_id' => $product->id]) }}" onclick="return confirm('¿Está seguro de eliminar este producto?')" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
                                                 </a>
                                             </div>

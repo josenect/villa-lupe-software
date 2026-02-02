@@ -46,6 +46,41 @@
         border-right: none;
         border-radius: 10px 0 0 10px;
     }
+    
+    /* Responsive para formulario agregar producto */
+    @media (max-width: 768px) {
+        .form-agregar-producto .row {
+            gap: 0.5rem;
+        }
+        
+        .select2-container {
+            width: 100% !important;
+        }
+        
+        .select2-container--default .select2-selection--single {
+            height: 52px;
+            font-size: 16px;
+        }
+        
+        /* Botones de acción en la mesa */
+        .action-buttons-mesa {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 100%;
+        }
+        
+        .action-buttons-mesa a,
+        .action-buttons-mesa button {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        /* Modal responsive */
+        .modal-body .pago-box {
+            margin-bottom: 0.5rem;
+        }
+    }
 </style>
 @endsection
 
@@ -89,21 +124,21 @@
                         <p class="mb-2"><strong><i class="bi bi-tag text-primary"></i> Nombre:</strong> {{ $mesa->name }}</p>
                         <p class="mb-0"><strong><i class="bi bi-geo-alt text-primary"></i> Ubicación:</strong> {{ $mesa->location }}</p>
                     </div>
-                    <div class="col-md-6 text-md-end">
-                        <div class="action-buttons justify-content-md-end">
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        <div class="action-buttons action-buttons-mesa justify-content-md-end">
                             @if($productosTable->count() > 0)
                                 <a target="_blank" href="/visual-pdf-pre/{{ $mesa->id }}" class="btn-warning-custom">
-                                    <i class="bi bi-printer"></i> Imprimir Preliminar
+                                    <i class="bi bi-printer"></i> Preliminar
                                 </a>
                                 @if(auth()->user() && auth()->user()->esAdmin())
                                     <a href="#" id="generar-factura-btn" data-mesa-id="{{ $mesa->id }}" class="btn-success-custom">
-                                        <i class="bi bi-receipt"></i> Generar Factura
+                                        <i class="bi bi-receipt"></i> Facturar
                                     </a>
                                 @endif
                             @else
                                 @if(auth()->user() && auth()->user()->esAdmin())
                                     <a target="_blank" href="/generar-factura/{{ $mesa->id }}" class="btn-primary-custom">
-                                        <i class="bi bi-eye"></i> Ver Última Factura
+                                        <i class="bi bi-eye"></i> Ver Última
                                     </a>
                                 @endif
                             @endif
@@ -133,13 +168,13 @@
         <h2><i class="bi bi-plus-circle"></i> Agregar Producto</h2>
     </div>
     <div class="card-body-custom">
-        <form action="{{ route('add.product.table', ['mesa_id' => $mesa->id]) }}" method="POST">
+        <form action="{{ route('add.product.table', ['mesa_id' => $mesa->id]) }}" method="POST" class="form-agregar-producto">
             @csrf
-            <div class="row g-3">
-                <div class="col-md-4">
+            <div class="row g-2 g-md-3">
+                <div class="col-12 col-md-4">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
-                            <i class="bi bi-box-seam"></i> Seleccione un producto
+                            <i class="bi bi-box-seam"></i> Producto
                         </label>
                         <select id="product_id" name="product_id" class="form-select-custom" required>
                             <option value="">Seleccionar Producto</option>
@@ -149,15 +184,15 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
-                            <i class="bi bi-hash"></i> Cantidad
+                            <i class="bi bi-hash"></i> Cant.
                         </label>
                         <input type="number" name="amount" class="form-control-custom" min="1" value="1" required>
                     </div>
                 </div>
-                <div class="col-md-1">
+                <div class="col-6 col-md-1">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
                             <i class="bi bi-percent"></i> Desc.
@@ -165,16 +200,16 @@
                         <input type="number" name="dicount" class="form-control-custom" min="0" value="0">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
-                            <i class="bi bi-chat-dots"></i> Observación
+                            <i class="bi bi-chat-dots"></i> Nota
                         </label>
-                        <input type="text" name="observacion" class="form-control-custom" placeholder="Ej: Sin cebolla, término medio...">
+                        <input type="text" name="observacion" class="form-control-custom" placeholder="Sin cebolla, término medio...">
                     </div>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn-success-custom w-100 justify-content-center">
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn-success-custom w-100 justify-content-center" style="min-height: 48px;">
                         <i class="bi bi-plus-lg"></i> Agregar
                     </button>
                 </div>
@@ -300,19 +335,19 @@
                     <tbody>
                         @foreach ($productosTable as $producto)
                             <tr class="{{ $producto->estado === 'cancelacion_solicitada' ? 'table-warning' : '' }}">
-                                <td><strong>{{ $producto->producto->name }}</strong></td>
-                                <td>
+                                <td data-label="Producto"><strong>{{ $producto->producto->name }}</strong></td>
+                                <td data-label="Cantidad">
                                     <span class="badge bg-secondary">{{ $producto->amount }}</span>
                                 </td>
-                                <td><strong>$ {{ number_format(($producto->price - $producto->dicount) * $producto->amount, 0, ',', '.') }}</strong></td>
-                                <td>
+                                <td data-label="Total"><strong>$ {{ number_format(($producto->price - $producto->dicount) * $producto->amount, 0, ',', '.') }}</strong></td>
+                                <td data-label="Observación">
                                     @if($producto->observacion)
                                         <small class="text-info"><i class="bi bi-chat-dots"></i> {{ $producto->observacion }}</small>
                                     @else
                                         <small class="text-muted">-</small>
                                     @endif
                                 </td>
-                                <td>
+                                <td data-label="Estado">
                                     @switch($producto->estado)
                                         @case('pendiente')
                                             <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pendiente</span>
@@ -323,6 +358,9 @@
                                         @case('listo')
                                             <span class="badge bg-success"><i class="bi bi-check-circle"></i> Listo</span>
                                             @break
+                                        @case('entregado')
+                                            <span class="badge bg-primary"><i class="bi bi-check2-all"></i> Entregado</span>
+                                            @break
                                         @case('cancelacion_solicitada')
                                             <span class="badge bg-danger"><i class="bi bi-hourglass-split"></i> Cancel. Solicitada</span>
                                             @break
@@ -330,7 +368,7 @@
                                             <span class="badge bg-secondary">{{ $producto->estado }}</span>
                                     @endswitch
                                 </td>
-                                <td>
+                                <td data-label="Acciones">
                                     <div class="action-buttons">
                                         @if($producto->estado !== 'cancelacion_solicitada')
                                             <a class="btn-primary-custom btn-sm-custom" href="{{ route('show.product.table', ['mesa_id' => $mesa->id, 'id' => $producto->id]) }}" title="Editar">
@@ -346,7 +384,7 @@
                                                 </button>
                                             @endif
                                         @else
-                                            <small class="text-muted">Esperando aprobación...</small>
+                                            <small class="text-muted">Esperando...</small>
                                         @endif
                                     </div>
                                 </td>

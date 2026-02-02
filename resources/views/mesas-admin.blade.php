@@ -48,11 +48,11 @@
                             <tbody>
                                 @foreach ($tables as $mesa)
                                     <tr>
-                                        <td>
+                                        <td data-label="Nombre">
                                             <strong><i class="bi bi-table text-primary"></i> {{ $mesa->name }}</strong>
                                         </td>
-                                        <td>{{ $mesa->location }}</td>
-                                        <td>
+                                        <td data-label="Ubicación">{{ $mesa->location }}</td>
+                                        <td data-label="Estado">
                                             @if($mesa->status == 1)
                                                 <span class="status-badge activo">
                                                     <i class="bi bi-check-circle"></i> Activa
@@ -63,13 +63,13 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td data-label="Acciones">
                                             <div class="action-buttons">
-                                                <a class="btn-primary-custom btn-sm-custom" href="{{ route('admin.mesas.show', ['mesa_id' => $mesa->id]) }}">
-                                                    <i class="bi bi-pencil"></i> Editar
+                                                <a class="btn-primary-custom btn-sm-custom" href="{{ route('admin.mesas.show', ['mesa_id' => $mesa->id]) }}" title="Editar">
+                                                    <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <a class="btn-danger-custom btn-sm-custom" href="{{ route('admin.mesas.delete', ['mesa_id' => $mesa->id]) }}" onclick="return confirm('¿Está seguro de eliminar esta mesa?')">
-                                                    <i class="bi bi-trash"></i> Eliminar
+                                                <a class="btn-danger-custom btn-sm-custom" href="{{ route('admin.mesas.delete', ['mesa_id' => $mesa->id]) }}" onclick="return confirm('¿Está seguro de eliminar esta mesa?')" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
                                                 </a>
                                             </div>
                                         </td>

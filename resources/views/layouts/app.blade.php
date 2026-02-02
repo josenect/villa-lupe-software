@@ -452,24 +452,292 @@
             margin-top: 2rem;
         }
         
-        /* Responsive */
+        /* ===================== RESPONSIVE STYLES ===================== */
+        
+        /* Tablets y móviles grandes */
+        @media (max-width: 991px) {
+            .main-container {
+                padding: 1rem 0;
+            }
+            
+            .card-header-custom {
+                padding: 1rem;
+            }
+            
+            .card-body-custom {
+                padding: 1rem;
+            }
+        }
+        
+        /* Móviles */
         @media (max-width: 768px) {
             .page-title {
-                font-size: 1.5rem;
+                font-size: 1.3rem;
             }
             
+            /* Header responsive */
+            .d-flex.justify-content-between.align-items-center.mb-4 {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch !important;
+            }
+            
+            .d-flex.justify-content-between.align-items-center.mb-4 > * {
+                text-align: center;
+            }
+            
+            /* Navbar móvil */
+            .navbar-custom {
+                padding: 0.5rem 0;
+            }
+            
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .navbar-nav {
+                padding: 1rem 0;
+            }
+            
+            .nav-link {
+                padding: 0.75rem 1rem !important;
+                margin: 0.2rem 0;
+                text-align: center;
+            }
+            
+            /* Cards responsive */
+            .card-header-custom h2 {
+                font-size: 1.1rem;
+            }
+            
+            /* Tablas responsive - Convertir a tarjetas en móvil */
             .table-responsive {
                 border-radius: 12px;
-                overflow: hidden;
+                overflow: visible;
             }
             
+            .table-custom {
+                display: block;
+            }
+            
+            .table-custom thead {
+                display: none;
+            }
+            
+            .table-custom tbody {
+                display: block;
+            }
+            
+            .table-custom tbody tr {
+                display: block;
+                background: white;
+                margin-bottom: 1rem;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                border-left: 4px solid var(--secondary-color);
+            }
+            
+            .table-custom tbody tr:hover {
+                transform: none;
+            }
+            
+            .table-custom tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid #eee;
+                text-align: right;
+            }
+            
+            .table-custom tbody td:last-child {
+                border-bottom: none;
+                padding-top: 1rem;
+            }
+            
+            .table-custom tbody td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--primary-color);
+                text-align: left;
+                flex: 1;
+                font-size: 0.85rem;
+            }
+            
+            .table-custom tfoot {
+                display: block;
+            }
+            
+            .table-custom tfoot tr {
+                display: block;
+                padding: 1rem;
+                border-radius: 12px;
+            }
+            
+            .table-custom tfoot td {
+                display: block;
+                padding: 0.5rem 0;
+                text-align: center !important;
+                border: none;
+            }
+            
+            .table-custom tfoot td[colspan] {
+                display: block;
+            }
+            
+            /* Botones de acción en móvil */
             .action-buttons {
-                flex-direction: column;
+                flex-direction: row;
+                justify-content: center;
+                gap: 0.5rem;
+                width: 100%;
+                flex-wrap: wrap;
             }
             
             .btn-sm-custom {
-                width: 100%;
+                flex: 1;
+                min-width: 45px;
+                max-width: 60px;
                 justify-content: center;
+                padding: 0.6rem;
+            }
+            
+            /* Botones generales más grandes en móvil */
+            .btn-primary-custom,
+            .btn-danger-custom,
+            .btn-success-custom,
+            .btn-warning-custom,
+            .btn-secondary-custom {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+                justify-content: center;
+            }
+            
+            /* Formularios responsive */
+            .form-group {
+                margin-bottom: 1rem;
+            }
+            
+            .form-control-custom,
+            .form-select-custom {
+                padding: 0.9rem 1rem;
+                font-size: 16px; /* Evita zoom en iOS */
+            }
+            
+            /* Modales responsive */
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            
+            .modal-body {
+                padding: 1rem !important;
+            }
+            
+            /* Stats cards */
+            .contador-pedidos {
+                font-size: 2rem;
+            }
+            
+            /* Mesa card responsive */
+            .mesa-card {
+                padding: 1rem;
+            }
+            
+            .mesa-card h4 {
+                font-size: 1rem;
+            }
+            
+            /* Search box */
+            .search-box {
+                width: 100%;
+            }
+            
+            .search-box input {
+                width: 100%;
+            }
+            
+            /* Footer */
+            .footer-custom {
+                font-size: 0.8rem;
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Móviles pequeños */
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 1.1rem;
+            }
+            
+            .card-header-custom h2 {
+                font-size: 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            /* Hacer botones de acción más táctiles */
+            .btn-sm-custom {
+                padding: 0.7rem;
+                min-width: 50px;
+            }
+            
+            .action-buttons {
+                gap: 0.4rem;
+            }
+            
+            /* Badges más legibles */
+            .badge {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.6rem;
+            }
+            
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+        }
+        
+        /* Mejoras táctiles generales */
+        @media (hover: none) and (pointer: coarse) {
+            /* Dispositivos táctiles */
+            .btn-primary-custom,
+            .btn-danger-custom,
+            .btn-success-custom,
+            .btn-warning-custom,
+            .btn-secondary-custom,
+            .btn-sm-custom {
+                min-height: 44px; /* Mínimo recomendado por Apple/Google */
+            }
+            
+            .nav-link {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Quitar efectos hover que no aplican en táctiles */
+            .card-custom:hover,
+            .mesa-card:hover,
+            .pedido-card:hover {
+                transform: none;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            .navbar-custom,
+            .footer-custom,
+            .btn-primary-custom,
+            .btn-danger-custom,
+            .btn-success-custom,
+            .btn-warning-custom,
+            .btn-secondary-custom,
+            .action-buttons {
+                display: none !important;
             }
         }
         
@@ -524,6 +792,20 @@
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="/">
                                     <i class="bi bi-house-door"></i> Inicio
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('mesero/pedidos*') ? 'active' : '' }}" href="{{ route('mesero.pedidos') }}">
+                                    <i class="bi bi-clipboard-check"></i> Mis Pedidos
+                                    @php
+                                        $pedidosListosMesero = \App\Models\ElementTable::where('status', 1)
+                                            ->where('estado', 'listo')
+                                            ->where('user_id', auth()->id())
+                                            ->count();
+                                    @endphp
+                                    @if($pedidosListosMesero > 0)
+                                        <span class="badge bg-success">{{ $pedidosListosMesero }}</span>
+                                    @endif
                                 </a>
                             </li>
                         @endif

@@ -59,12 +59,12 @@
                         <tbody>
                             @foreach($factura->detalleFacturas as $detalle)
                                 <tr>
-                                    <td><strong>{{ $detalle->producto->name ?? 'Producto eliminado' }}</strong></td>
-                                    <td><span class="badge bg-secondary">{{ $detalle->amount }}</span></td>
-                                    <td>$ {{ number_format($detalle->price, 0, ',', '.') }}</td>
-                                    <td class="text-danger">- $ {{ number_format($detalle->discount, 0, ',', '.') }}</td>
-                                    <td>$ {{ number_format($detalle->price * $detalle->amount, 0, ',', '.') }}</td>
-                                    <td><strong>$ {{ number_format(($detalle->price - $detalle->discount) * $detalle->amount, 0, ',', '.') }}</strong></td>
+                                    <td data-label="Producto"><strong>{{ $detalle->producto->name ?? 'Producto eliminado' }}</strong></td>
+                                    <td data-label="Cantidad"><span class="badge bg-secondary">{{ $detalle->amount }}</span></td>
+                                    <td data-label="Precio Unit.">$ {{ number_format($detalle->price, 0, ',', '.') }}</td>
+                                    <td data-label="Descuento" class="text-danger">- $ {{ number_format($detalle->discount, 0, ',', '.') }}</td>
+                                    <td data-label="Subtotal">$ {{ number_format($detalle->price * $detalle->amount, 0, ',', '.') }}</td>
+                                    <td data-label="Total"><strong>$ {{ number_format(($detalle->price - $detalle->discount) * $detalle->amount, 0, ',', '.') }}</strong></td>
                                 </tr>
                             @endforeach
                         </tbody>

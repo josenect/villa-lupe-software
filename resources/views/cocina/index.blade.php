@@ -106,6 +106,73 @@
         animation: pulse-alert 0.5s ease-in-out 3;
         box-shadow: 0 0 20px rgba(243, 156, 18, 0.6) !important;
     }
+    
+    /* Responsive para cocina */
+    @media (max-width: 768px) {
+        .contador-pedidos {
+            font-size: 2rem;
+        }
+        
+        .pedido-card {
+            padding: 0.75rem;
+        }
+        
+        .pedido-card h4 {
+            font-size: 1rem;
+        }
+        
+        .mesa-badge {
+            font-size: 0.9rem;
+        }
+        
+        .btn-listo {
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-sound {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .refresh-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            bottom: 15px;
+            right: 15px;
+        }
+        
+        #banner-sonido {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        #banner-sonido button {
+            margin-top: 0.5rem;
+            margin-left: 0 !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .d-flex.gap-2 {
+            flex-direction: column;
+            gap: 0.3rem !important;
+        }
+        
+        .pedido-card .d-flex.gap-2 {
+            flex-direction: row;
+            gap: 0.5rem !important;
+        }
+        
+        .btn-listo, 
+        .btn.btn-sm.btn-outline-danger {
+            flex: 1;
+            text-align: center;
+            justify-content: center;
+        }
+    }
 </style>
 @endsection
 
@@ -183,9 +250,14 @@
                     <div class="col-md-6 col-lg-4" id="pedido-{{ $pedido->id }}">
                         <div class="pedido-card {{ $pedido->estado === 'en_cocina' ? 'en-cocina' : '' }}">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="mesa-badge badge bg-primary">
-                                    <i class="bi bi-table"></i> {{ $pedido->mesa->name ?? 'Mesa' }}
-                                </span>
+                                <div>
+                                    <span class="mesa-badge badge bg-primary">
+                                        <i class="bi bi-table"></i> {{ $pedido->mesa->name ?? 'Mesa' }}
+                                    </span>
+                                    <span class="badge bg-secondary ms-1">
+                                        <i class="bi bi-person"></i> {{ $pedido->usuario->name ?? 'N/A' }}
+                                    </span>
+                                </div>
                                 <span class="badge {{ $pedido->estado === 'en_cocina' ? 'bg-danger' : 'bg-warning text-dark' }}">
                                     {{ $pedido->estado === 'en_cocina' ? 'En Cocina' : 'Pendiente' }}
                                 </span>
@@ -245,7 +317,10 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="pedido-card listo">
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-primary">{{ $pedido->mesa->name ?? 'Mesa' }}</span>
+                            <div>
+                                <span class="badge bg-primary">{{ $pedido->mesa->name ?? 'Mesa' }}</span>
+                                <span class="badge bg-info ms-1"><i class="bi bi-person"></i> {{ $pedido->usuario->name ?? 'N/A' }}</span>
+                            </div>
                             <span class="badge bg-success"><i class="bi bi-check"></i> Listo</span>
                         </div>
                         <h5 class="mb-0 mt-2">
@@ -453,9 +528,14 @@
             <div class="col-md-6 col-lg-4" id="pedido-${pedido.id}">
                 <div class="${cardClass}">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="mesa-badge badge bg-primary">
-                            <i class="bi bi-table"></i> ${pedido.mesa_nombre}
-                        </span>
+                        <div>
+                            <span class="mesa-badge badge bg-primary">
+                                <i class="bi bi-table"></i> ${pedido.mesa_nombre}
+                            </span>
+                            <span class="badge bg-secondary ms-1">
+                                <i class="bi bi-person"></i> ${pedido.mesero_nombre}
+                            </span>
+                        </div>
                         <span class="badge ${badgeClass}">
                             ${estadoTexto}
                         </span>
@@ -516,7 +596,10 @@
             <div class="col-md-6 col-lg-4">
                 <div class="pedido-card listo">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="badge bg-primary">${pedido.mesa_nombre}</span>
+                        <div>
+                            <span class="badge bg-primary">${pedido.mesa_nombre}</span>
+                            <span class="badge bg-info ms-1"><i class="bi bi-person"></i> ${pedido.mesero_nombre}</span>
+                        </div>
                         <span class="badge bg-success"><i class="bi bi-check"></i> Listo</span>
                     </div>
                     <h5 class="mb-0 mt-2">

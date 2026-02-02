@@ -49,24 +49,24 @@
                     <tbody>
                         @foreach ($cancelaciones as $item)
                             <tr>
-                                <td>
+                                <td data-label="Mesa">
                                     <span class="badge bg-primary">{{ $item->mesa->name ?? 'N/A' }}</span>
                                 </td>
-                                <td><strong>{{ $item->producto->name }}</strong></td>
-                                <td>
+                                <td data-label="Producto"><strong>{{ $item->producto->name }}</strong></td>
+                                <td data-label="Cantidad">
                                     <span class="badge bg-secondary">{{ $item->amount }}</span>
                                 </td>
-                                <td>$ {{ number_format(($item->price - $item->dicount) * $item->amount, 0, ',', '.') }}</td>
-                                <td>
+                                <td data-label="Valor">$ {{ number_format(($item->price - $item->dicount) * $item->amount, 0, ',', '.') }}</td>
+                                <td data-label="Motivo">
                                     <span class="text-danger">{{ $item->motivo_cancelacion }}</span>
                                 </td>
-                                <td>
+                                <td data-label="Solicitó">
                                     {{ $item->solicitadoPor->name ?? 'N/A' }}
                                 </td>
-                                <td>
+                                <td data-label="Hora">
                                     <small>{{ $item->fecha_solicitud_cancelacion ? $item->fecha_solicitud_cancelacion->format('H:i') : '-' }}</small>
                                 </td>
-                                <td>
+                                <td data-label="Acciones">
                                     <div class="action-buttons">
                                         <form action="{{ route('admin.cancelacion.aprobar', $item->id) }}" method="POST" style="display: inline;">
                                             @csrf
