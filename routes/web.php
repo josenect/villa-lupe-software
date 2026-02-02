@@ -125,6 +125,7 @@ Route::middleware(['role'])->group(function () {
     
     Route::middleware(['role:admin,cocina'])->group(function () {
         Route::get('/cocina', [CocinaController::class, 'index'])->name('cocina.index');
+        Route::get('/cocina/pedidos', [CocinaController::class, 'getPedidosAjax'])->name('cocina.pedidos');
         Route::post('/cocina/{id}/listo', [CocinaController::class, 'marcarListo'])->name('cocina.listo');
         Route::post('/cocina/{id}/en-cocina', [CocinaController::class, 'marcarEnCocina'])->name('cocina.enCocina');
     });
