@@ -859,6 +859,11 @@
                                     @endif
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/pedidos-meseros*') ? 'active' : '' }}" href="{{ route('admin.pedidos.meseros') }}" title="Pedidos por Mesero">
+                                    <i class="bi bi-people"></i>
+                                </a>
+                            </li>
                         @endif
                         
                         @if(auth()->user()->esCocina() || auth()->user()->esAdmin())

@@ -325,9 +325,10 @@
                     <thead>
                         <tr>
                             <th><i class="bi bi-box"></i> Producto</th>
+                            <th><i class="bi bi-person"></i> Mesero</th>
                             <th><i class="bi bi-hash"></i> Cant.</th>
                             <th><i class="bi bi-cash-stack"></i> Total</th>
-                            <th><i class="bi bi-chat-dots"></i> Observación</th>
+                            <th><i class="bi bi-chat-dots"></i> Obs.</th>
                             <th><i class="bi bi-flag"></i> Estado</th>
                             <th><i class="bi bi-gear"></i> Acciones</th>
                         </tr>
@@ -336,11 +337,14 @@
                         @foreach ($productosTable as $producto)
                             <tr class="{{ $producto->estado === 'cancelacion_solicitada' ? 'table-warning' : '' }}">
                                 <td data-label="Producto"><strong>{{ $producto->producto->name }}</strong></td>
+                                <td data-label="Mesero">
+                                    <small class="text-primary">{{ $producto->usuario->name ?? 'N/A' }}</small>
+                                </td>
                                 <td data-label="Cantidad">
                                     <span class="badge bg-secondary">{{ $producto->amount }}</span>
                                 </td>
                                 <td data-label="Total"><strong>$ {{ number_format(($producto->price - $producto->dicount) * $producto->amount, 0, ',', '.') }}</strong></td>
-                                <td data-label="Observación">
+                                <td data-label="Obs.">
                                     @if($producto->observacion)
                                         <small class="text-info"><i class="bi bi-chat-dots"></i> {{ $producto->observacion }}</small>
                                     @else

@@ -15,7 +15,7 @@ class TransactionsTableController extends Controller
     {
         $mesa = Table::findOrFail($id);
         $productos = Producto::orderBy('name', 'ASC')->where('status',1)->get();
-        $productosTable = ElementTable::with('producto')
+        $productosTable = ElementTable::with(['producto', 'usuario'])
             ->where('status', 1)
             ->where('table_id', $id)
             ->where('estado', '!=', ElementTable::ESTADO_CANCELADO)

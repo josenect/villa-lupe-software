@@ -118,6 +118,9 @@ Route::middleware(['role'])->group(function () {
         Route::post('admin/cancelaciones/{id}/aprobar', [TransactionsTableController::class, 'aprobarCancelacion'])->name('admin.cancelacion.aprobar');
         Route::post('admin/cancelaciones/{id}/rechazar', [TransactionsTableController::class, 'rechazarCancelacion'])->name('admin.cancelacion.rechazar');
 
+        // Pedidos por mesero (admin)
+        Route::get('admin/pedidos-meseros', [App\Http\Controllers\AdminPedidosController::class, 'index'])->name('admin.pedidos.meseros');
+
         // Reporte en ticket
         Route::get('visual-reporte/{date}', [FacturaController::class, 'visualReporteTicket'])->name('admin.reporte.ticket');
     });
