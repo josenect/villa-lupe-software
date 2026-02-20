@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Reportes del Día - Villa Lupe')
+@section('title', 'Reportes — ' . \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe'))
 
 @section('styles')
 <style>
@@ -13,19 +13,56 @@
 @endsection
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4 fade-in no-print">
+@php
+    $dataActual     = request()->get('data', 'facturas');
+    $esCat          = str_starts_with($dataActual, 'cat-');
+    $esCocina       = $dataActual === 'cocina';
+    $esFacturas     = $dataActual === 'facturas';
+    $esProductos    = $dataActual === 'productos';
+    $currentSlug    = $esCat ? substr($dataActual, 4) : null;
+    $currentCatData = $esCat && isset($categoriaData[$currentSlug]) ? $categoriaData[$currentSlug] : null;
+    $currentCat     = $esCat ? $categorias->firstWhere('slug', $currentSlug) : null;
+    $rangoExtra     = $desde !== $hasta ? '&hasta=' . $hasta : '';
+    $baseUrl        = '/admin/facturas/' . $desde;
+@endphp
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 fade-in no-print gap-3">
     <h1 class="page-title mb-0">
-        <i class="bi bi-graph-up"></i> Reportes del Día
+        <i class="bi bi-graph-up"></i> Reportes
+        <small class="text-muted fs-6 ms-2">
+            {{ $desde === $hasta ? $desde : $desde . ' → ' . $hasta }}
+        </small>
     </h1>
-    <div class="d-flex gap-2 align-items-center">
-        <form action="" method="GET" class="d-flex gap-2">
-            <input type="date" name="fecha" value="{{ $date }}" class="form-control-custom" style="width: auto;" onchange="window.location.href='/admin/facturas/' + this.value">
-        </form>
+    <div class="d-flex flex-wrap gap-2 align-items-end">
+        <div>
+            <small class="text-muted d-block" style="font-size:0.75rem;">Desde</small>
+            <input type="date" id="input-desde" class="form-control-custom" value="{{ $desde }}" style="width:auto;">
+        </div>
+        <div>
+            <small class="text-muted d-block" style="font-size:0.75rem;">Hasta</small>
+            <input type="date" id="input-hasta" class="form-control-custom" value="{{ $hasta }}" style="width:auto;">
+        </div>
+        <button type="button" class="btn-primary-custom" onclick="aplicarRango()">
+            <i class="bi bi-search"></i> Buscar
+        </button>
         <a href="/" class="btn-secondary-custom">
             <i class="bi bi-arrow-left"></i> Inicio
         </a>
     </div>
 </div>
+<script>
+function aplicarRango() {
+    var desde = document.getElementById('input-desde').value;
+    var hasta = document.getElementById('input-hasta').value;
+    if (!desde) return;
+    var data  = '{{ $dataActual }}';
+    var url   = '/admin/facturas/' + desde + '?data=' + data;
+    if (hasta && hasta !== desde) url += '&hasta=' + hasta;
+    window.location.href = url;
+}
+document.getElementById('input-desde')?.addEventListener('keydown', function(e){ if(e.key==='Enter') aplicarRango(); });
+document.getElementById('input-hasta')?.addEventListener('keydown', function(e){ if(e.key==='Enter') aplicarRango(); });
+</script>
 
 @if(session('success'))
     <div class="alert-custom alert-success-custom fade-in no-print">
@@ -43,28 +80,50 @@
 
 <!-- Navegación de Reportes -->
 <div class="card-custom mb-4 fade-in no-print">
-    <div class="card-body-custom">
-        <div class="d-flex flex-wrap gap-2 justify-content-center">
-            <a href="/admin/facturas/{{ $date }}?data=facturas" class="btn-primary-custom {{ request()->get('data') == 'facturas' ? '' : 'btn-secondary-custom' }}">
+    <div class="card-body-custom pb-2">
+        {{-- Fijos: Facturas + Todos los Productos + Imprimir --}}
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a href="{{ $baseUrl }}?data=facturas{{ $rangoExtra }}"
+               class="{{ $esFacturas ? 'btn-primary-custom' : 'btn-secondary-custom' }}">
                 <i class="bi bi-receipt"></i> Facturas
             </a>
-            <a href="/admin/facturas/{{ $date }}?data=productos" class="btn-primary-custom {{ request()->get('data') == 'productos' ? '' : 'btn-secondary-custom' }}">
-                <i class="bi bi-box-seam"></i> Productos
+            <a href="{{ $baseUrl }}?data=productos{{ $rangoExtra }}"
+               class="{{ $esProductos ? 'btn-primary-custom' : 'btn-secondary-custom' }}">
+                <i class="bi bi-box-seam"></i> Todos los Productos
             </a>
-            <a href="/admin/facturas/{{ $date }}?data=cocina" class="btn-primary-custom {{ request()->get('data') == 'cocina' ? '' : 'btn-secondary-custom' }}">
-                <i class="bi bi-egg-fried"></i> Cocina Almuerzos
-            </a>
-            <a href="/admin/facturas/{{ $date }}?data=cocina-productos" class="btn-primary-custom {{ request()->get('data') == 'cocina-productos' ? '' : 'btn-secondary-custom' }}">
-                <i class="bi bi-cup-hot"></i> Cocina Productos
-            </a>
-            <a href="/visual-reporte/{{ $date }}?data={{ request()->get('data', 'facturas') }}" target="_blank" class="btn-warning-custom">
+            <a href="/visual-reporte/{{ $desde }}?data={{ $dataActual }}{{ $rangoExtra }}" target="_blank" class="btn-warning-custom ms-auto">
                 <i class="bi bi-printer"></i> Imprimir Ticket
             </a>
         </div>
+
+        {{-- Lista de categorías (scrolleable) --}}
+        @if($categorias->count() > 0)
+        <div class="border-top pt-2">
+            <small class="text-muted d-block mb-2"><i class="bi bi-folder2"></i> Categorías:</small>
+            <div class="d-flex flex-wrap gap-2" style="max-height: 90px; overflow-y: auto;">
+                @foreach($categorias as $cat)
+                <a href="{{ $baseUrl }}?data=cat-{{ $cat->slug }}{{ $rangoExtra }}"
+                   class="{{ $dataActual == 'cat-'.$cat->slug ? 'btn-primary-custom' : 'btn-secondary-custom' }}"
+                   style="font-size: 0.82rem; padding: 4px 10px;">
+                    @if($cat->es_cocina)<i class="bi bi-fire"></i>@else<i class="bi bi-folder"></i>@endif
+                    {{ $cat->nombre }}
+                </a>
+                @endforeach
+                @if($categorias->where('es_cocina', true)->count() > 1)
+                <a href="{{ $baseUrl }}?data=cocina{{ $rangoExtra }}"
+                   class="{{ $esCocina ? 'btn-primary-custom' : 'btn-secondary-custom' }}"
+                   style="font-size: 0.82rem; padding: 4px 10px;">
+                    <i class="bi bi-fire"></i> Toda la Cocina
+                </a>
+                @endif
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
-<!-- Resumen Rápido -->
+{{-- ── Resumen solo para FACTURAS ─────────────────────────────────────────── --}}
+@if($esFacturas)
 <div class="row g-4 mb-4 fade-in">
     <div class="col-md-3">
         <div class="card-custom h-100">
@@ -103,8 +162,6 @@
         </div>
     </div>
 </div>
-
-<!-- Resumen por Método de Pago -->
 <div class="row g-4 mb-4 fade-in">
     <div class="col-md-4">
         <div class="card-custom h-100" style="border-left: 4px solid #27ae60;">
@@ -134,12 +191,60 @@
         </div>
     </div>
 </div>
+@endif
+
+{{-- ── Resumen para CATEGORÍA o COCINA (solo ventas + productos de esa cat) ── --}}
+@if($esCat && $currentCatData)
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-md-6">
+        <div class="card-custom h-100">
+            <div class="card-body-custom text-center">
+                <i class="bi bi-cash-stack text-success" style="font-size: 2rem;"></i>
+                <h3 class="text-success mt-2 mb-0">$ {{ number_format($currentCatData['totalPrecio'], 0, ',', '.') }}</h3>
+                <small class="text-muted">Ventas — {{ $currentCat->nombre ?? '' }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-custom h-100">
+            <div class="card-body-custom text-center">
+                <i class="bi bi-box text-info" style="font-size: 2rem;"></i>
+                <h3 class="text-info mt-2 mb-0">{{ $currentCatData['totalProductos'] }}</h3>
+                <small class="text-muted">Productos — {{ $currentCat->nombre ?? '' }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+@if($esCocina)
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-md-6">
+        <div class="card-custom h-100">
+            <div class="card-body-custom text-center">
+                <i class="bi bi-cash-stack text-success" style="font-size: 2rem;"></i>
+                <h3 class="text-success mt-2 mb-0">$ {{ number_format($cocinaTodo['totalPrecio'], 0, ',', '.') }}</h3>
+                <small class="text-muted">Ventas — Toda la Cocina</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-custom h-100">
+            <div class="card-body-custom text-center">
+                <i class="bi bi-box text-info" style="font-size: 2rem;"></i>
+                <h3 class="text-info mt-2 mb-0">{{ $cocinaTodo['totalProductos'] }}</h3>
+                <small class="text-muted">Productos — Toda la Cocina</small>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- REPORTE DE FACTURAS -->
-@if(!request()->has('data') || request()->get('data') === 'facturas')
+@if($esFacturas)
 <div class="card-custom mb-4 fade-in">
     <div class="card-header-custom">
-        <h2><i class="bi bi-receipt"></i> Facturas del {{ $date }}</h2>
+        <h2><i class="bi bi-receipt"></i> Facturas — {{ $desde === $hasta ? $desde : $desde . ' → ' . $hasta }}</h2>
     </div>
     <div class="card-body-custom">
         @if($facturas->count() > 0)
@@ -237,10 +342,10 @@
 @endif
 
 <!-- REPORTE DE PRODUCTOS -->
-@if(request()->has('data') && request()->get('data') === 'productos')
+@if($esProductos)
 <div class="card-custom mb-4 fade-in">
     <div class="card-header-custom">
-        <h2><i class="bi bi-box-seam"></i> Productos Vendidos - {{ $date }}</h2>
+        <h2><i class="bi bi-box-seam"></i> Productos Vendidos — {{ $desde === $hasta ? $desde : $desde . ' → ' . $hasta }}</h2>
     </div>
     <div class="card-body-custom">
         @if(count($detalleElementos) > 0)
@@ -285,14 +390,18 @@
 </div>
 @endif
 
-<!-- REPORTE COCINA ALMUERZOS -->
-@if(request()->has('data') && request()->get('data') === 'cocina')
+<!-- REPORTE POR CATEGORÍA ESPECÍFICA -->
+@foreach($categorias as $cat)
+@if($esCat && $currentSlug === $cat->slug)
 <div class="card-custom mb-4 fade-in">
-    <div class="card-header-custom" style="background: linear-gradient(135deg, #e67e22, #d35400) !important;">
-        <h2><i class="bi bi-egg-fried"></i> Cocina - Almuerzos - {{ $date }}</h2>
+    <div class="card-header-custom" style="background: linear-gradient(135deg, {{ $cat->es_cocina ? '#e67e22, #d35400' : '#2980b9, #2471a3' }}) !important;">
+        <h2>
+            @if($cat->es_cocina)<i class="bi bi-fire"></i>@else<i class="bi bi-folder"></i>@endif
+            {{ $cat->nombre }} — {{ $desde === $hasta ? $desde : $desde . ' → ' . $hasta }}
+        </h2>
     </div>
     <div class="card-body-custom">
-        @if(count($detalleCocinaAlmu) > 0)
+        @if(count($categoriaData[$cat->slug]['productos']) > 0)
             <div class="table-responsive">
                 <table class="table-custom">
                     <thead>
@@ -304,20 +413,20 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($detalleCocinaAlmu as $productoCocina)
+                        @foreach ($categoriaData[$cat->slug]['productos'] as $p)
                             <tr>
-                                <td><span class="badge bg-warning text-dark fs-6">{{ $productoCocina->cantidad }}</span></td>
-                                <td><strong>{{ $productoCocina->name }}</strong></td>
-                                <td>$ {{ number_format($productoCocina->precio - $productoCocina->descuento, 0, ',', '.') }}</td>
-                                <td><strong class="text-success">$ {{ number_format(($productoCocina->precio - $productoCocina->descuento) * $productoCocina->cantidad, 0, ',', '.') }}</strong></td>
+                                <td><span class="badge bg-warning text-dark fs-6">{{ $p->cantidad }}</span></td>
+                                <td><strong>{{ $p->name }}</strong></td>
+                                <td>$ {{ number_format($p->precio - $p->descuento, 0, ',', '.') }}</td>
+                                <td><strong class="text-success">$ {{ number_format(($p->precio - $p->descuento) * $p->cantidad, 0, ',', '.') }}</strong></td>
                             </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td><strong>{{ $cocinaTotalProductosAlmu }}</strong></td>
+                            <td><strong>{{ $categoriaData[$cat->slug]['totalProductos'] }}</strong></td>
                             <td colspan="2" class="text-end"><strong>TOTAL:</strong></td>
-                            <td><strong class="fs-5">$ {{ number_format($cocinaTotalPrecioAlmu, 0, ',', '.') }}</strong></td>
+                            <td><strong class="fs-5">$ {{ number_format($categoriaData[$cat->slug]['totalPrecio'], 0, ',', '.') }}</strong></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -325,46 +434,49 @@
         @else
             <div class="text-center py-5">
                 <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
-                <p class="text-muted mt-3">No hay almuerzos vendidos para esta fecha</p>
+                <p class="text-muted mt-3">No hay productos de esta categoría para esta fecha</p>
             </div>
         @endif
     </div>
 </div>
 @endif
+@endforeach
 
-<!-- REPORTE COCINA PRODUCTOS -->
-@if(request()->has('data') && request()->get('data') === 'cocina-productos')
+<!-- REPORTE TODA LA COCINA (todas las categorías es_cocina combinadas) -->
+@if($esCocina)
 <div class="card-custom mb-4 fade-in">
     <div class="card-header-custom" style="background: linear-gradient(135deg, #9b59b6, #8e44ad) !important;">
-        <h2><i class="bi bi-cup-hot"></i> Cocina - Todos los Productos - {{ $date }}</h2>
+        <h2><i class="bi bi-fire"></i> Toda la Cocina — {{ $desde === $hasta ? $desde : $desde . ' → ' . $hasta }}</h2>
     </div>
     <div class="card-body-custom">
-        @if(count($detalleCocina) > 0)
+        @if(count($cocinaTodo['productos']) > 0)
             <div class="table-responsive">
                 <table class="table-custom">
                     <thead>
                         <tr>
                             <th><i class="bi bi-hash"></i> Cantidad</th>
                             <th><i class="bi bi-box"></i> Producto</th>
+                            <th><i class="bi bi-folder"></i> Categoría</th>
                             <th><i class="bi bi-currency-dollar"></i> Precio Unit.</th>
                             <th><i class="bi bi-cash-stack"></i> Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($detalleCocina as $productoCocina)
+                        @foreach ($cocinaTodo['productos'] as $p)
                             <tr>
-                                <td><span class="badge bg-purple fs-6" style="background-color: #9b59b6;">{{ $productoCocina->cantidad }}</span></td>
-                                <td><strong>{{ $productoCocina->name }}</strong></td>
-                                <td>$ {{ number_format($productoCocina->precio - $productoCocina->descuento, 0, ',', '.') }}</td>
-                                <td><strong class="text-success">$ {{ number_format(($productoCocina->precio - $productoCocina->descuento) * $productoCocina->cantidad, 0, ',', '.') }}</strong></td>
+                                <td><span class="badge bg-purple fs-6" style="background-color: #9b59b6;">{{ $p->cantidad }}</span></td>
+                                <td><strong>{{ $p->name }}</strong></td>
+                                <td><span class="badge bg-info">{{ $p->category }}</span></td>
+                                <td>$ {{ number_format($p->precio - $p->descuento, 0, ',', '.') }}</td>
+                                <td><strong class="text-success">$ {{ number_format(($p->precio - $p->descuento) * $p->cantidad, 0, ',', '.') }}</strong></td>
                             </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td><strong>{{ $cocinaTotalProductos }}</strong></td>
-                            <td colspan="2" class="text-end"><strong>TOTAL:</strong></td>
-                            <td><strong class="fs-5">$ {{ number_format($cocinaTotalPrecio, 0, ',', '.') }}</strong></td>
+                            <td><strong>{{ $cocinaTodo['totalProductos'] }}</strong></td>
+                            <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                            <td><strong class="fs-5">$ {{ number_format($cocinaTodo['totalPrecio'], 0, ',', '.') }}</strong></td>
                         </tr>
                     </tfoot>
                 </table>

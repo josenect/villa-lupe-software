@@ -3,7 +3,7 @@
 @section('title', 'Villa Lupe - Inicio')
 
 @section('content')
-{{date_default_timezone_set('America/Bogota')}}
+@php date_default_timezone_set('America/Bogota'); @endphp
 
 @php
     // Convertir a array si es necesario y contar
@@ -17,7 +17,7 @@
 
 <div class="text-center mb-4 fade-in">
     <h1 class="page-title">
-        <i class="bi bi-shop"></i> Bienvenido a Villa Lupe
+        @if(\App\Models\Setting::get('restaurante_logo', ''))<img src="{{ asset('storage/' . \App\Models\Setting::get('restaurante_logo')) }}" alt="Logo" style="height:36px;width:auto;object-fit:contain;margin-right:8px;border-radius:6px;">@else<i class="bi bi-shop"></i>@endif Bienvenido a {{ \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe') }}
     </h1>
     <p class="text-white opacity-75">Sistema de Gestión de Mesas y Pedidos</p>
 </div>

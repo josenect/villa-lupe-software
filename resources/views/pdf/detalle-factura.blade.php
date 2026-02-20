@@ -80,8 +80,15 @@
         </div>
     @endif
     
-    <h1>VILLA LUPE</h1>
-    <p>Casa de Campo</p>
+    @php
+        $restNombre    = \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe');
+        $restPropiedad = \App\Models\Setting::get('restaurante_propiedad', '');
+        $restDireccion = \App\Models\Setting::get('restaurante_direccion', '');
+        $restLogo      = \App\Models\Setting::get('restaurante_logo', '');
+    @endphp
+    <h1>{{ strtoupper($restNombre) }}</h1>
+    @if($restPropiedad)<p>{{ $restPropiedad }}</p>@endif
+    @if($restDireccion)<p>{{ $restDireccion }}</p>@endif
     <p>Fecha: {{ $factura->created_at }}</p>
     <h2>{{ $mesa->name }}</h2>
     <h2>Factura: {{ $factura->numero_factura }}</h2>
@@ -151,5 +158,6 @@
             *** NO VÁLIDA ***
         </div>
     @endif
+<script>window.addEventListener('load', function () { window.print(); });</script>
 </body>
 </html>

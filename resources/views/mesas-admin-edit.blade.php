@@ -47,7 +47,7 @@
                         <label class="form-label-custom">
                             <i class="bi bi-geo-alt"></i> Ubicación
                         </label>
-                        <input type="text" name="location" class="form-control-custom" value="{{ $table->location }}" required>
+                        <input type="text" name="location" class="form-control-custom" value="{{ $table->location }}">
                     </div>
                     
                     <div class="form-group">

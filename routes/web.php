@@ -11,6 +11,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\MeseroPedidosController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\SettingController;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Route;
 
@@ -121,8 +123,21 @@ Route::middleware(['role'])->group(function () {
         // Pedidos por mesero (admin)
         Route::get('admin/pedidos-meseros', [App\Http\Controllers\AdminPedidosController::class, 'index'])->name('admin.pedidos.meseros');
 
+        // Gestionar categorías
+        Route::prefix('admin/categorias')->group(function () {
+            Route::get('', [CategoriaController::class, 'index'])->name('admin.categorias.index');
+            Route::post('', [CategoriaController::class, 'store'])->name('admin.categorias.store');
+            Route::put('{id}', [CategoriaController::class, 'update'])->name('admin.categorias.update');
+            Route::post('{id}/toggle', [CategoriaController::class, 'toggle'])->name('admin.categorias.toggle');
+            Route::delete('{id}', [CategoriaController::class, 'destroy'])->name('admin.categorias.destroy');
+        });
+
         // Reporte en ticket
         Route::get('visual-reporte/{date}', [FacturaController::class, 'visualReporteTicket'])->name('admin.reporte.ticket');
+
+        // Configuración del sistema
+        Route::get('admin/configuracion', [SettingController::class, 'index'])->name('admin.configuracion');
+        Route::post('admin/configuracion', [SettingController::class, 'update'])->name('admin.configuracion.update');
     });
 
     // ==================== RUTAS PARA COCINA ====================

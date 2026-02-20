@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Reporte del Día - {{ $date }}</title>
+    <title>Reporte — {{ $desde === $hasta ? $desde : $desde . ' al ' . $hasta }}</title>
     <style>
         * {
             margin: 0;
@@ -65,11 +65,17 @@
     </style>
 </head>
 <body>
-    <h1>VILLA LUPE</h1>
-    <p>Casa de Campo</p>
+    @php
+        $restNombre    = \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe');
+        $restPropiedad = \App\Models\Setting::get('restaurante_propiedad', '');
+        $restDireccion = \App\Models\Setting::get('restaurante_direccion', '');
+    @endphp
+    <h1>{{ strtoupper($restNombre) }}</h1>
+    @if($restPropiedad)<p>{{ $restPropiedad }}</p>@endif
+    @if($restDireccion)<p>{{ $restDireccion }}</p>@endif
     <p>--------------------------------</p>
     <h2>REPORTE DEL DÍA</h2>
-    <p>{{ $date }}</p>
+    <p>{{ $desde === $hasta ? $desde : $desde . ' al ' . $hasta }}</p>
     <p>--------------------------------</p>
 
     @if($tipo === 'facturas')
@@ -152,8 +158,10 @@
         </table>
     @endif
 
-    @if($tipo === 'cocina')
-        <p><strong>** COCINA ALMUERZOS **</strong></p>
+    {{-- Reporte por categoría específica --}}
+    @foreach($categorias as $cat)
+    @if($tipo === 'cat-'.$cat->slug)
+        <p><strong>** {{ strtoupper($cat->nombre) }} **</strong></p>
         <table>
             <thead>
                 <tr>
@@ -163,7 +171,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($detalleCocinaAlmu as $producto)
+                @foreach ($categoriaData[$cat->slug]['productos'] as $producto)
                 <tr>
                     <td style="text-align:left;">{{ $producto->cantidad }}</td>
                     <td style="text-align:left;">{{ $producto->name }}</td>
@@ -176,17 +184,19 @@
         <table>
             <tr>
                 <td style="text-align:left;"><strong>Total Uds:</strong></td>
-                <td style="text-align:right;"><strong>{{ $cocinaTotalProductosAlmu }}</strong></td>
+                <td style="text-align:right;"><strong>{{ $categoriaData[$cat->slug]['totalProductos'] }}</strong></td>
             </tr>
             <tr>
                 <td style="text-align:left;"><strong>TOTAL:</strong></td>
-                <td style="text-align:right;"><strong>$ {{ number_format($cocinaTotalPrecioAlmu, 0, ',', '.') }}</strong></td>
+                <td style="text-align:right;"><strong>$ {{ number_format($categoriaData[$cat->slug]['totalPrecio'], 0, ',', '.') }}</strong></td>
             </tr>
         </table>
     @endif
+    @endforeach
 
-    @if($tipo === 'cocina-productos')
-        <p><strong>** COCINA PRODUCTOS **</strong></p>
+    {{-- Reporte toda la cocina --}}
+    @if($tipo === 'cocina')
+        <p><strong>** TODA LA COCINA **</strong></p>
         <table>
             <thead>
                 <tr>
@@ -196,7 +206,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($detalleCocina as $producto)
+                @foreach ($cocinaTodo['productos'] as $producto)
                 <tr>
                     <td style="text-align:left;">{{ $producto->cantidad }}</td>
                     <td style="text-align:left;">{{ $producto->name }}</td>
@@ -209,16 +219,17 @@
         <table>
             <tr>
                 <td style="text-align:left;"><strong>Total Uds:</strong></td>
-                <td style="text-align:right;"><strong>{{ $cocinaTotalProductos }}</strong></td>
+                <td style="text-align:right;"><strong>{{ $cocinaTodo['totalProductos'] }}</strong></td>
             </tr>
             <tr>
                 <td style="text-align:left;"><strong>TOTAL:</strong></td>
-                <td style="text-align:right;"><strong>$ {{ number_format($cocinaTotalPrecio, 0, ',', '.') }}</strong></td>
+                <td style="text-align:right;"><strong>$ {{ number_format($cocinaTodo['totalPrecio'], 0, ',', '.') }}</strong></td>
             </tr>
         </table>
     @endif
 
     <p>--------------------------------</p>
     <p>Impreso: {{ date('d/m/Y H:i') }}</p>
+<script>window.addEventListener('load', function () { window.print(); });</script>
 </body>
 </html>

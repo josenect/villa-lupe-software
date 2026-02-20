@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Factura;
-use App\Models\Table; 
-use App\Models\Producto; 
+use App\Models\Table;
+use App\Models\Producto;
 use App\Models\ElementTable;
 use App\Models\DetalleFactura;
+use App\Models\Categoria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -129,91 +130,105 @@ class FacturaController extends Controller
     }
 
     //visualizar factura admin con reportes del día
-    public function showFacturaAdmin($date)
+    public function showFacturaAdmin($date, Request $request)
     {
-        date_default_timezone_set('America/Bogota'); 
+        date_default_timezone_set('America/Bogota');
 
-        // Solo facturas activas para los reportes
-        $facturas = Factura::whereDate('created_at', $date)
+        $desde = $date;
+        $hasta = $request->get('hasta', $date);
+
+        $facturasIds = Factura::whereDate('created_at', '>=', $desde)
+            ->whereDate('created_at', '<=', $hasta)
             ->where('estado', Factura::ESTADO_ACTIVA)
             ->pluck('id')->toArray();
-        
+
+        $categorias = Categoria::where('activo', true)->orderBy('nombre')->get();
+
+        // Inicializar estructura dinámica por categoría
+        $categoriaData = [];
+        foreach ($categorias as $cat) {
+            $categoriaData[$cat->slug] = [
+                'nombre'         => $cat->nombre,
+                'es_cocina'      => $cat->es_cocina,
+                'productos'      => [],
+                'totalProductos' => 0,
+                'totalPrecio'    => 0,
+            ];
+        }
+        $cocinaTodo = ['productos' => [], 'totalProductos' => 0, 'totalPrecio' => 0];
+
         $totalProductos = 0;
-        $totalPrecio = 0; 
-        $detalleCocina = [];
-        $cocinaTotalProductos = 0;
-        $cocinaTotalPrecio = 0;
-        $detalleCocinaAlmu = [];
-        $cocinaTotalProductosAlmu = 0;
-        $cocinaTotalPrecioAlmu = 0;
-        
-        $detalleElementos = DetalleFactura::select('producto_id', 'productos.name','productos.category','detalle_facturas.discount as descuento','detalle_facturas.price as precio', DB::raw('SUM(detalle_facturas.amount) as cantidad'))
+        $totalPrecio    = 0;
+
+        $detalleElementos = DetalleFactura::select(
+                'producto_id',
+                'productos.name',
+                'productos.category',
+                'detalle_facturas.discount as descuento',
+                'detalle_facturas.price as precio',
+                DB::raw('SUM(detalle_facturas.amount) as cantidad')
+            )
             ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
             ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
-            ->whereIn('facturas.id', $facturas)
+            ->whereIn('facturas.id', $facturasIds)
             ->where('facturas.estado', Factura::ESTADO_ACTIVA)
-            ->groupBy('producto_id', 'productos.name','detalle_facturas.price','category','detalle_facturas.discount')
+            ->groupBy('producto_id', 'productos.name', 'detalle_facturas.price', 'category', 'detalle_facturas.discount')
             ->get();
-       
-        if($detalleElementos){
-            foreach ($detalleElementos as $key => $value) {
-                $totalProductos = $value->cantidad + $totalProductos ;
-                $totalPrecio = ($value->cantidad * ($value->precio - $value->descuento )) +  $totalPrecio ;
-                if($value->category === 'restaurante-bebida' || $value->category === 'restaurante-almuerzos'){
-                    $detalleCocina[]=$value;
-                    $cocinaTotalProductos = $value->cantidad + $cocinaTotalProductos ;
-                    $cocinaTotalPrecio = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecio ;
-                }
-                if($value->category === 'restaurante-almuerzos'){
-                    $detalleCocinaAlmu[]=$value;
-                    $cocinaTotalProductosAlmu = $value->cantidad + $cocinaTotalProductosAlmu ;
-                    $cocinaTotalPrecioAlmu = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecioAlmu ;
+
+        foreach ($detalleElementos as $value) {
+            $totalProductos += $value->cantidad;
+            $totalPrecio    += $value->cantidad * ($value->precio - $value->descuento);
+
+            if (isset($categoriaData[$value->category])) {
+                $categoriaData[$value->category]['productos'][]       = $value;
+                $categoriaData[$value->category]['totalProductos']   += $value->cantidad;
+                $categoriaData[$value->category]['totalPrecio']      += $value->cantidad * ($value->precio - $value->descuento);
+
+                if ($categoriaData[$value->category]['es_cocina']) {
+                    $cocinaTodo['productos'][]     = $value;
+                    $cocinaTodo['totalProductos'] += $value->cantidad;
+                    $cocinaTodo['totalPrecio']    += $value->cantidad * ($value->precio - $value->descuento);
                 }
             }
-
-            // Todas las facturas del día (activas y anuladas) para mostrar en la lista
-            $facturas = Factura::with('mesa')
-                ->whereDate('created_at', $date)
-                ->orderBy('created_at', 'desc')
-                ->get();
-            
-            $facturasTotal = 0;
-            $totalEfectivo = 0;
-            $totalTransferencia = 0;
-            $propinaTotal = 0;
-            
-            foreach ($facturas as $key => $value) {
-                // Solo sumar las activas al total
-                if($value->estado === Factura::ESTADO_ACTIVA) {
-                    $facturasTotal = $facturasTotal + $value->valor_pagado;
-                    $propinaTotal = $propinaTotal + $value->valor_propina;
-                    
-                    // Sumar por los campos de valor
-                    $totalEfectivo = $totalEfectivo + $value->valor_efectivo;
-                    $totalTransferencia = $totalTransferencia + $value->valor_transferencia;
-                }
-            }
-
-            return view('pdf.detalle-factura-day', compact(
-                'facturas',
-                'detalleElementos',
-                'totalProductos',
-                'totalPrecio',
-                'facturasTotal',
-                'totalEfectivo',
-                'totalTransferencia',
-                'propinaTotal',
-                'detalleCocina',
-                'cocinaTotalProductos',
-                'cocinaTotalPrecio',
-                'detalleCocinaAlmu',
-                'cocinaTotalProductosAlmu',
-                'cocinaTotalPrecioAlmu',
-                'date'
-            ))->render();
         }
-        
-        return redirect()->route('inicio')->with('success', 'Las facturas no existen.');
+
+        // Todas las facturas del período para mostrar en lista
+        $facturas = Factura::with('mesa')
+            ->whereDate('created_at', '>=', $desde)
+            ->whereDate('created_at', '<=', $hasta)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $facturasTotal      = 0;
+        $totalEfectivo      = 0;
+        $totalTransferencia = 0;
+        $propinaTotal       = 0;
+
+        foreach ($facturas as $value) {
+            if ($value->estado === Factura::ESTADO_ACTIVA) {
+                $facturasTotal      += $value->valor_pagado;
+                $propinaTotal       += $value->valor_propina;
+                $totalEfectivo      += $value->valor_efectivo;
+                $totalTransferencia += $value->valor_transferencia;
+            }
+        }
+
+        return view('pdf.detalle-factura-day', compact(
+            'facturas',
+            'detalleElementos',
+            'totalProductos',
+            'totalPrecio',
+            'facturasTotal',
+            'totalEfectivo',
+            'totalTransferencia',
+            'propinaTotal',
+            'categorias',
+            'categoriaData',
+            'cocinaTodo',
+            'date',
+            'desde',
+            'hasta'
+        ))->render();
     }
 
     /**
@@ -320,70 +335,87 @@ class FacturaController extends Controller
     }
 
     /**
-     * Visualizar reporte del día en formato ticket (44mm)
+     * Visualizar reporte del día en formato ticket (58mm)
      */
     public function visualReporteTicket($date, Request $request)
     {
-        date_default_timezone_set('America/Bogota'); 
-        
-        $tipo = $request->get('data', 'facturas');
+        date_default_timezone_set('America/Bogota');
 
-        // Solo facturas activas para los reportes
-        $facturasIds = Factura::whereDate('created_at', $date)
+        $tipo  = $request->get('data', 'facturas');
+        $desde = $date;
+        $hasta = $request->get('hasta', $date);
+
+        $facturasIds = Factura::whereDate('created_at', '>=', $desde)
+            ->whereDate('created_at', '<=', $hasta)
             ->where('estado', Factura::ESTADO_ACTIVA)
             ->pluck('id')->toArray();
-        
+
+        $categorias = Categoria::where('activo', true)->orderBy('nombre')->get();
+
+        $categoriaData = [];
+        foreach ($categorias as $cat) {
+            $categoriaData[$cat->slug] = [
+                'nombre'         => $cat->nombre,
+                'es_cocina'      => $cat->es_cocina,
+                'productos'      => [],
+                'totalProductos' => 0,
+                'totalPrecio'    => 0,
+            ];
+        }
+        $cocinaTodo = ['productos' => [], 'totalProductos' => 0, 'totalPrecio' => 0];
+
         $totalProductos = 0;
-        $totalPrecio = 0; 
-        $detalleCocina = [];
-        $cocinaTotalProductos = 0;
-        $cocinaTotalPrecio = 0;
-        $detalleCocinaAlmu = [];
-        $cocinaTotalProductosAlmu = 0;
-        $cocinaTotalPrecioAlmu = 0;
-        
-        $detalleElementos = DetalleFactura::select('producto_id', 'productos.name','productos.category','detalle_facturas.discount as descuento','detalle_facturas.price as precio', DB::raw('SUM(detalle_facturas.amount) as cantidad'))
+        $totalPrecio    = 0;
+
+        $detalleElementos = DetalleFactura::select(
+                'producto_id',
+                'productos.name',
+                'productos.category',
+                'detalle_facturas.discount as descuento',
+                'detalle_facturas.price as precio',
+                DB::raw('SUM(detalle_facturas.amount) as cantidad')
+            )
             ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
             ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
             ->whereIn('facturas.id', $facturasIds)
             ->where('facturas.estado', Factura::ESTADO_ACTIVA)
-            ->groupBy('producto_id', 'productos.name','detalle_facturas.price','category','detalle_facturas.discount')
+            ->groupBy('producto_id', 'productos.name', 'detalle_facturas.price', 'category', 'detalle_facturas.discount')
             ->get();
-       
-        foreach ($detalleElementos as $key => $value) {
-            $totalProductos = $value->cantidad + $totalProductos ;
-            $totalPrecio = ($value->cantidad * ($value->precio - $value->descuento )) +  $totalPrecio ;
-            if($value->category === 'restaurante-bebida' || $value->category === 'restaurante-almuerzos'){
-                $detalleCocina[]=$value;
-                $cocinaTotalProductos = $value->cantidad + $cocinaTotalProductos ;
-                $cocinaTotalPrecio = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecio ;
-            }
-            if($value->category === 'restaurante-almuerzos'){
-                $detalleCocinaAlmu[]=$value;
-                $cocinaTotalProductosAlmu = $value->cantidad + $cocinaTotalProductosAlmu ;
-                $cocinaTotalPrecioAlmu = ($value->cantidad * $value->precio ) +  $cocinaTotalPrecioAlmu ;
+
+        foreach ($detalleElementos as $value) {
+            $totalProductos += $value->cantidad;
+            $totalPrecio    += $value->cantidad * ($value->precio - $value->descuento);
+
+            if (isset($categoriaData[$value->category])) {
+                $categoriaData[$value->category]['productos'][]     = $value;
+                $categoriaData[$value->category]['totalProductos'] += $value->cantidad;
+                $categoriaData[$value->category]['totalPrecio']    += $value->cantidad * ($value->precio - $value->descuento);
+
+                if ($categoriaData[$value->category]['es_cocina']) {
+                    $cocinaTodo['productos'][]     = $value;
+                    $cocinaTodo['totalProductos'] += $value->cantidad;
+                    $cocinaTodo['totalPrecio']    += $value->cantidad * ($value->precio - $value->descuento);
+                }
             }
         }
 
-        // Todas las facturas del día (activas y anuladas) para mostrar en la lista
         $facturas = Factura::with('mesa')
-            ->whereDate('created_at', $date)
+            ->whereDate('created_at', '>=', $desde)
+            ->whereDate('created_at', '<=', $hasta)
             ->orderBy('created_at', 'desc')
             ->get();
-        
-        $facturasTotal = 0;
-        $totalEfectivo = 0;
+
+        $facturasTotal      = 0;
+        $totalEfectivo      = 0;
         $totalTransferencia = 0;
-        $propinaTotal = 0;
-        
-        foreach ($facturas as $key => $value) {
-            if($value->estado === Factura::ESTADO_ACTIVA) {
-                $facturasTotal = $facturasTotal + $value->valor_pagado;
-                $propinaTotal = $propinaTotal + $value->valor_propina;
-                
-                // Sumar por los campos de valor
-                $totalEfectivo = $totalEfectivo + $value->valor_efectivo;
-                $totalTransferencia = $totalTransferencia + $value->valor_transferencia;
+        $propinaTotal       = 0;
+
+        foreach ($facturas as $value) {
+            if ($value->estado === Factura::ESTADO_ACTIVA) {
+                $facturasTotal      += $value->valor_pagado;
+                $propinaTotal       += $value->valor_propina;
+                $totalEfectivo      += $value->valor_efectivo;
+                $totalTransferencia += $value->valor_transferencia;
             }
         }
 
@@ -396,13 +428,12 @@ class FacturaController extends Controller
             'totalEfectivo',
             'totalTransferencia',
             'propinaTotal',
-            'detalleCocina',
-            'cocinaTotalProductos',
-            'cocinaTotalPrecio',
-            'detalleCocinaAlmu',
-            'cocinaTotalProductosAlmu',
-            'cocinaTotalPrecioAlmu',
+            'categorias',
+            'categoriaData',
+            'cocinaTodo',
             'date',
+            'desde',
+            'hasta',
             'tipo'
         ))->render();
     }

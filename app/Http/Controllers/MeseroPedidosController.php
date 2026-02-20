@@ -4,19 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ElementTable;
+use App\Models\Categoria;
 use Illuminate\Support\Facades\Auth;
 
 class MeseroPedidosController extends Controller
 {
     // Tiempo de actualización en milisegundos (10 segundos)
     const REFRESH_TIME = 10000;
-    
-    // Categorías de cocina
-    const CATEGORIAS_COCINA = [
-        'restaurante-almuerzos',
-        'restaurante-bebida',
-        'restaurante-adicional',
-    ];
 
     /**
      * Vista principal - Mis pedidos
@@ -181,11 +175,11 @@ class MeseroPedidosController extends Controller
             
         if ($esCocina) {
             $query->whereHas('producto', function ($q) {
-                $q->whereIn('category', self::CATEGORIAS_COCINA);
+                $q->whereIn('category', Categoria::slugsCocina());
             });
         } else {
             $query->whereHas('producto', function ($q) {
-                $q->whereNotIn('category', self::CATEGORIAS_COCINA);
+                $q->whereNotIn('category', Categoria::slugsCocina());
             });
         }
         
@@ -208,11 +202,11 @@ class MeseroPedidosController extends Controller
             
         if ($esCocina) {
             $query->whereHas('producto', function ($q) {
-                $q->whereIn('category', self::CATEGORIAS_COCINA);
+                $q->whereIn('category', Categoria::slugsCocina());
             });
         } else {
             $query->whereHas('producto', function ($q) {
-                $q->whereNotIn('category', self::CATEGORIAS_COCINA);
+                $q->whereNotIn('category', Categoria::slugsCocina());
             });
         }
         
@@ -243,11 +237,11 @@ class MeseroPedidosController extends Controller
             
         if ($esCocina) {
             $query->whereHas('producto', function ($q) {
-                $q->whereIn('category', self::CATEGORIAS_COCINA);
+                $q->whereIn('category', Categoria::slugsCocina());
             });
         } else {
             $query->whereHas('producto', function ($q) {
-                $q->whereNotIn('category', self::CATEGORIAS_COCINA);
+                $q->whereNotIn('category', Categoria::slugsCocina());
             });
         }
         

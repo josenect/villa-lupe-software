@@ -8,12 +8,6 @@ use Illuminate\Http\Request;
 
 class AdminPedidosController extends Controller
 {
-    // Categorías de cocina
-    const CATEGORIAS_COCINA = [
-        'restaurante-almuerzos',
-        'restaurante-bebida',
-    ];
-
     /**
      * Vista principal - Pedidos por mesero
      */

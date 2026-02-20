@@ -25,15 +25,12 @@ class TableController extends Controller
         // Validar los datos recibidos del formulario (si es necesario).
         $request->validate([
             'name' => 'required',
-            'location' => 'required',
         ]);
-   
-        $table = Table::where('name',$request->input('name'))->where('location',$request->input('location'))->get();
 
-        if((!$table->isEmpty())){
+        $table = Table::where('name', $request->input('name'))->get();
 
-            return redirect()->route('admin.mesas.show')->with('error', 'Existe una mesa con el mismo nombre en la ubicacion.');
-
+        if (!$table->isEmpty()) {
+            return redirect()->route('admin.mesas.showAll')->with('error', 'Ya existe una mesa con ese nombre.');
         }
         date_default_timezone_set('America/Bogota');
         // Crear un nuevo registro en la tabla 'productos'.
@@ -58,20 +55,16 @@ class TableController extends Controller
     {
         // Validar los datos recibidos del formulario (si es necesario).
         $request->validate([
-            'name' => 'required',
-            'location' => 'required',
-            'status' => 'required'
+            'name'   => 'required',
+            'status' => 'required',
         ]);
-        $table = Table::where('name',$request->input('name'))->where('location',$request->input('location'))->get();
 
-        if((!$table->isEmpty())){
-            foreach ($table as $key => $value) {
-                if($value->id == $mesa_id){
-                    continue;
-                }else{
-                    return redirect()->route('admin.mesas.showAll')->with('error', 'Existe una mesa con el mismo nombre en la ubicacion.');
-                }
-            }
+        $existe = Table::where('name', $request->input('name'))
+            ->where('id', '!=', $mesa_id)
+            ->exists();
+
+        if ($existe) {
+            return redirect()->route('admin.mesas.showAll')->with('error', 'Ya existe una mesa con ese nombre.');
         }
 
         if($request->input('status') == 0){

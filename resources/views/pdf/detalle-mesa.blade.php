@@ -64,8 +64,14 @@
     </style>
 </head>
 <body>
-    <h1>VILLA LUPE</h1>
-    <p>Casa de Campo</p>
+    @php
+        $restNombre    = \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe');
+        $restPropiedad = \App\Models\Setting::get('restaurante_propiedad', '');
+        $restDireccion = \App\Models\Setting::get('restaurante_direccion', '');
+    @endphp
+    <h1>{{ strtoupper($restNombre) }}</h1>
+    @if($restPropiedad)<p>{{ $restPropiedad }}</p>@endif
+    @if($restDireccion)<p>{{ $restDireccion }}</p>@endif
     <p>Fecha: {{ date('d/m/Y H:i') }}</p>
     <h2>{{ $mesa->name }}</h2>
     <table>
@@ -110,5 +116,6 @@
             </tr>
         </tbody>
     </table>
+<script>window.addEventListener('load', function () { window.print(); });</script>
 </body>
 </html>

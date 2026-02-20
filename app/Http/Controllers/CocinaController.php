@@ -4,17 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ElementTable;
+use App\Models\Categoria;
 
 class CocinaController extends Controller
 {
     // Tiempo de actualización en milisegundos (15 segundos)
     const REFRESH_TIME = 15000;
-    // Categorías que se muestran en cocina
-    const CATEGORIAS_COCINA = [
-        'restaurante-almuerzos',
-        'restaurante-bebida',
-        'restaurante-adicional',
-    ];
 
     /**
      * Vista principal de cocina - pedidos activos
@@ -94,7 +89,7 @@ class CocinaController extends Controller
                 ElementTable::ESTADO_EN_COCINA
             ])
             ->whereHas('producto', function ($query) {
-                $query->whereIn('category', self::CATEGORIAS_COCINA);
+                $query->whereIn('category', Categoria::slugsCocina());
             })
             ->orderBy('record', 'asc')
             ->get();
@@ -109,7 +104,7 @@ class CocinaController extends Controller
             ->where('status', 1)
             ->where('estado', ElementTable::ESTADO_LISTO)
             ->whereHas('producto', function ($query) {
-                $query->whereIn('category', self::CATEGORIAS_COCINA);
+                $query->whereIn('category', Categoria::slugsCocina());
             })
             ->orderBy('updated_at', 'desc')
             ->limit(10)
@@ -135,7 +130,7 @@ class CocinaController extends Controller
                 ->orWhere('status', 0);
             })
             ->whereHas('producto', function ($query) {
-                $query->whereIn('category', self::CATEGORIAS_COCINA);
+                $query->whereIn('category', Categoria::slugsCocina());
             })
             ->orderBy('updated_at', 'desc')
             ->get();

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>@yield('title', 'Villa Lupe')</title>
+    <title>@yield('title', \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe'))</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -335,8 +335,8 @@
         }
         
         .alert-success-custom {
-            background-color: rgba(39, 174, 96, 0.15);
-            color: var(--success-color);
+            background-color: rgb(253 255 255 / 83%);
+            color: #1e9c0e;
         }
         
         .alert-error-custom {
@@ -777,10 +777,21 @@
 </head>
 <body>
     <!-- Navbar -->
+    @php
+        $navCocinaVisible     = \App\Models\Setting::get('menu_cocina_visible', '1') === '1';
+        $navMisPedidosVisible = \App\Models\Setting::get('menu_mis_pedidos_visible', '1') === '1';
+        $navRestNombre        = \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe');
+        $navRestLogo          = \App\Models\Setting::get('restaurante_logo', '');
+    @endphp
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container">
             <a class="navbar-brand" href="@auth @if(auth()->user()->esCocina()) {{ route('cocina.index') }} @else / @endif @else / @endauth">
-                <i class="bi bi-shop"></i> Villa Lupe
+                @if($navRestLogo)
+                    <img src="{{ asset('storage/' . $navRestLogo) }}" alt="Logo" style="height:28px;width:auto;object-fit:contain;margin-right:6px;border-radius:4px;">
+                @else
+                    <i class="bi bi-shop"></i>
+                @endif
+                {{ $navRestNombre }}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -794,6 +805,7 @@
                                     <i class="bi bi-house-door"></i> Inicio
                                 </a>
                             </li>
+                            @if($navMisPedidosVisible)
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('mesero/pedidos*') ? 'active' : '' }}" href="{{ route('mesero.pedidos') }}">
                                     <i class="bi bi-clipboard-check"></i> Mis Pedidos
@@ -808,21 +820,49 @@
                                     @endif
                                 </a>
                             </li>
+                            @endif
                         @endif
                         
                         @if(auth()->user()->esAdmin())
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/mesas*') ? 'active' : '' }}" href="/admin/mesas">
-                                    <i class="bi bi-grid-3x3"></i> Mesas
+                            @php
+                                $cancelacionesPendientes = \App\Models\ElementTable::where('estado', 'cancelacion_solicitada')->count();
+                            @endphp
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->is('admin/mesas*') || request()->is('admin/productos*') || request()->is('admin/usuarios*') || request()->is('admin/cancelaciones*') || request()->is('admin/pedidos-meseros*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i> Gestión
+                                    @if($cancelacionesPendientes > 0)
+                                        <span class="badge bg-danger">{{ $cancelacionesPendientes }}</span>
+                                    @endif
                                 </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/productos*') ? 'active' : '' }}" href="/admin/productos">
-                                    <i class="bi bi-box-seam"></i> Productos
-                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="/admin/mesas">
+                                            <i class="bi bi-grid-3x3"></i> Mesas
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/admin/productos">
+                                            <i class="bi bi-box-seam"></i> Productos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.usuarios.index') }}">
+                                            <i class="bi bi-people"></i> Usuarios
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item {{ $cancelacionesPendientes > 0 ? 'text-danger' : '' }}" href="{{ route('admin.cancelaciones.pendientes') }}">
+                                            <i class="bi bi-x-circle"></i> Cancelaciones
+                                            @if($cancelacionesPendientes > 0)
+                                                <span class="badge bg-danger ms-1">{{ $cancelacionesPendientes }}</span>
+                                            @endif
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->is('admin/facturas*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->is('admin/facturas*') || request()->is('admin/pedidos-meseros*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-receipt"></i> Reportes
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -841,32 +881,17 @@
                                             <i class="bi bi-egg-fried"></i> Reporte Cocina
                                         </a>
                                     </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.pedidos.meseros') }}">
+                                            <i class="bi bi-clipboard-list"></i> Pedidos por Mesero
+                                        </a>
+                                    </li>
                                 </ul>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/usuarios*') ? 'active' : '' }}" href="{{ route('admin.usuarios.index') }}">
-                                    <i class="bi bi-people"></i> Usuarios
-                                </a>
-                            </li>
-                            @php
-                                $cancelacionesPendientes = \App\Models\ElementTable::where('estado', 'cancelacion_solicitada')->count();
-                            @endphp
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/cancelaciones*') ? 'active' : '' }}" href="{{ route('admin.cancelaciones.pendientes') }}" style="{{ $cancelacionesPendientes > 0 ? 'color: #e74c3c !important;' : '' }}">
-                                    <i class="bi bi-x-circle"></i>
-                                    @if($cancelacionesPendientes > 0)
-                                        <span class="badge bg-danger">{{ $cancelacionesPendientes }}</span>
-                                    @endif
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/pedidos-meseros*') ? 'active' : '' }}" href="{{ route('admin.pedidos.meseros') }}" title="Pedidos por Mesero">
-                                    <i class="bi bi-people"></i>
-                                </a>
                             </li>
                         @endif
                         
-                        @if(auth()->user()->esCocina() || auth()->user()->esAdmin())
+                        @if((auth()->user()->esCocina() || auth()->user()->esAdmin()) && $navCocinaVisible)
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('cocina*') ? 'active' : '' }}" href="{{ route('cocina.index') }}">
                                     <i class="bi bi-egg-fried"></i> Cocina
@@ -893,6 +918,13 @@
                                         </small>
                                     </span>
                                 </li>
+                                @if(auth()->user()->esAdmin())
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('admin.configuracion') }}">
+                                        <i class="bi bi-sliders"></i> Configuración
+                                    </a>
+                                </li>
+                                @endif
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form action="{{ route('logout') }}" method="POST">
@@ -925,7 +957,7 @@
     
     <!-- Footer -->
     <footer class="footer-custom">
-        <p class="mb-0">&copy; {{ date('Y') }} Villa Lupe - Sistema de Gestión de Restaurante</p>
+        <p class="mb-0">&copy; {{ date('Y') }} {{ $navRestNombre }} - Sistema de Gestión de Restaurante</p>
     </footer>
     
     <!-- Bootstrap 5 JS -->

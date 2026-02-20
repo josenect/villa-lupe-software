@@ -48,31 +48,23 @@
                             <i class="bi bi-folder"></i> Categoría
                         </label>
                         <select name="category" class="form-select-custom" required>
-                            <option value="restaurante" {{ $product->category == "restaurante" ? 'selected' : '' }}>Restaurante</option>
-                            <option value="restaurante-almuerzos" {{ $product->category == "restaurante-almuerzos" ? 'selected' : '' }}>Restaurante Almuerzos</option>
-                            <option value="restaurante-bebida" {{ $product->category == "restaurante-bebida" ? 'selected' : '' }}>Restaurante Bebidas</option>
-                            <option value="restaurante-adicional" {{ $product->category == "restaurante-adicional" ? 'selected' : '' }}>Restaurante Adicional</option>
-                            <option value="caseta" {{ $product->category == "caseta" ? 'selected' : '' }}>Caseta</option>
+                            <option value="">Seleccionar categoría</option>
+                            @foreach($categorias as $cat)
+                                <option value="{{ $cat->slug }}" {{ $product->category == $cat->slug ? 'selected' : '' }}>
+                                    {{ $cat->nombre }}{{ $cat->es_cocina ? ' 🔥' : '' }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label-custom">
-                                    <i class="bi bi-currency-dollar"></i> Precio
-                                </label>
-                                <input type="number" name="price" class="form-control-custom" value="{{ $product->price }}" min="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label-custom">
-                                    <i class="bi bi-boxes"></i> Inventario
-                                </label>
-                                <input type="number" name="inventory" class="form-control-custom" value="{{ $product->inventory }}" min="0">
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label-custom">
+                            <i class="bi bi-currency-dollar"></i> Precio
+                        </label>
+                        <input type="text" id="precioDisplay" class="form-control-custom"
+                            value="{{ $product->price > 0 ? '$ ' . number_format($product->price, 0, ',', '.') : '' }}"
+                            inputmode="numeric" autocomplete="off" required>
+                        <input type="hidden" name="price" id="precioHidden" value="{{ $product->price }}">
                     </div>
                     
                     <div class="form-group">
@@ -107,22 +99,31 @@
                 <h5 class="section-title">
                     <i class="bi bi-info-circle"></i> Información Actual
                 </h5>
-                <div class="row">
-                    <div class="col-6">
-                        <div class="text-center p-3" style="background: rgba(52, 152, 219, 0.1); border-radius: 10px;">
-                            <h3 class="text-primary mb-0">$ {{ number_format($product->price, 0, ',', '.') }}</h3>
-                            <small class="text-muted">Precio Actual</small>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-center p-3" style="background: rgba(39, 174, 96, 0.1); border-radius: 10px;">
-                            <h3 class="text-success mb-0">{{ $product->inventory }}</h3>
-                            <small class="text-muted">En Inventario</small>
-                        </div>
-                    </div>
+                <div class="text-center p-3" style="background: rgba(52, 152, 219, 0.1); border-radius: 10px;">
+                    <h3 class="text-primary mb-0">$ {{ number_format($product->price, 0, ',', '.') }}</h3>
+                    <small class="text-muted">Precio Actual</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+const precioDisplay = document.getElementById('precioDisplay');
+const precioHidden  = document.getElementById('precioHidden');
+
+precioDisplay?.addEventListener('input', function () {
+    const soloNumeros = this.value.replace(/\D/g, '');
+    precioHidden.value = soloNumeros;
+    this.value = soloNumeros
+        ? '$ ' + Number(soloNumeros).toLocaleString('es-CO')
+        : '';
+});
+
+precioDisplay?.addEventListener('keydown', function (e) {
+    const permitidos = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
+    if (permitidos.includes(e.key)) return;
+    if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+    if (e.key < '0' || e.key > '9') e.preventDefault();
+});
+</script>
 @endsection

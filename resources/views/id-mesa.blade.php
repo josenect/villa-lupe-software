@@ -52,16 +52,16 @@
         .form-agregar-producto .row {
             gap: 0.5rem;
         }
-        
+
         .select2-container {
             width: 100% !important;
         }
-        
+
         .select2-container--default .select2-selection--single {
             height: 52px;
             font-size: 16px;
         }
-        
+
         /* Botones de acción en la mesa */
         .action-buttons-mesa {
             display: flex;
@@ -69,16 +69,35 @@
             gap: 0.5rem;
             width: 100%;
         }
-        
+
         .action-buttons-mesa a,
         .action-buttons-mesa button {
             width: 100%;
             justify-content: center;
         }
-        
+
         /* Modal responsive */
         .modal-body .pago-box {
             margin-bottom: 0.5rem;
+        }
+
+        /* Tabla productos cargados más compacta en móvil */
+        .tabla-productos-mesa td,
+        .tabla-productos-mesa th {
+            font-size: 0.78rem;
+            padding: 4px 6px;
+        }
+        .tabla-productos-mesa td::before {
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .tabla-productos-mesa .badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+        .tabla-productos-mesa .btn-sm-custom {
+            padding: 3px 7px;
+            font-size: 0.75rem;
         }
     }
 </style>
@@ -192,12 +211,14 @@
                         <input type="number" name="amount" class="form-control-custom" min="1" value="1" required>
                     </div>
                 </div>
-                <div class="col-6 col-md-1">
+                <div class="col-6 col-md-2">
                     <div class="form-group mb-0">
                         <label class="form-label-custom">
-                            <i class="bi bi-percent"></i> Desc.
+                            <i class="bi bi-tag"></i> Desc. $
                         </label>
-                        <input type="number" name="dicount" class="form-control-custom" min="0" value="0">
+                        <input type="text" id="dicountDisplay" class="form-control-custom"
+                            placeholder="$ 0" inputmode="numeric" autocomplete="off">
+                        <input type="hidden" name="dicount" id="dicountHidden" value="0">
                     </div>
                 </div>
                 <div class="col-12 col-md-3">
@@ -234,16 +255,27 @@
                     <h2 class="text-primary mb-0">$ {{ number_format($total, 0, ',', '.') }}</h2>
                 </div>
                 
+                @php
+                    $propinaHabilitada  = \App\Models\Setting::get('propina_habilitada', '1') === '1';
+                    $propinaPorcentaje  = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
+                    $propinaValor       = $propinaHabilitada ? round($total * $propinaPorcentaje / 100) : 0;
+                @endphp
+                @if($propinaHabilitada)
                 <div class="mb-3">
                     <label class="form-label-custom">
                         <i class="bi bi-heart text-danger"></i> Propina
                     </label>
-                    <div class="input-group">
-                        <span class="input-group-text">$</span>
-                        <input type="number" id="modal-propina" class="form-control-custom" value="{{ number_format(($total * env('PROPINA'))/100, 0, '', '') }}" min="0" style="border-radius: 0 10px 10px 0;">
-                    </div>
-                    <small class="text-muted">Sugerida ({{ env('PROPINA') }}%): $ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</small>
+                    <input type="text" id="modal-propina" class="form-control-custom" inputmode="numeric" autocomplete="off"
+                        value="{{ $propinaValor > 0 ? '$ ' . number_format($propinaValor, 0, ',', '.') : '' }}">
+                    <input type="hidden" id="modal-propina-hidden" value="{{ $propinaValor }}">
+                    @if($propinaPorcentaje > 0)
+                    <small class="text-muted">Sugerida ({{ $propinaPorcentaje }}%): $ {{ number_format($propinaValor, 0, ',', '.') }}</small>
+                    @endif
                 </div>
+                @else
+                <input type="hidden" id="modal-propina" value="">
+                <input type="hidden" id="modal-propina-hidden" value="0">
+                @endif
                 
                 <div class="mb-3">
                     <label class="form-label-custom">
@@ -252,20 +284,29 @@
                     <div class="row g-2">
                         <div class="col-6">
                             <div class="pago-box efectivo">
-                                <label class="small text-success mb-1"><i class="bi bi-cash-stack"></i> Efectivo</label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" id="modal-efectivo" class="form-control" value="{{ $total + number_format(($total * env('PROPINA'))/100, 0, '', '') }}" min="0">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="small text-success mb-0"><i class="bi bi-cash-stack"></i> Efectivo</label>
+                                    <button type="button" id="btn-todo-efectivo"
+                                        style="font-size:0.7rem; padding:1px 7px; border-radius:6px; border:1px solid #27ae60; background:#27ae60; color:white; cursor:pointer; line-height:1.6;">
+                                        Todo
+                                    </button>
                                 </div>
+                                <input type="text" id="modal-efectivo" class="form-control-custom" inputmode="numeric" autocomplete="off"
+                                    value="{{ ($total + ($total * env('PROPINA'))/100) > 0 ? '$ ' . number_format($total + ($total * env('PROPINA'))/100, 0, ',', '.') : '' }}">
+                                <input type="hidden" id="modal-efectivo-hidden" value="{{ $total + number_format(($total * env('PROPINA'))/100, 0, '', '') }}">
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="pago-box transferencia">
-                                <label class="small text-primary mb-1"><i class="bi bi-phone"></i> Transferencia</label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" id="modal-transferencia" class="form-control" value="0" min="0">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="small text-primary mb-0"><i class="bi bi-phone"></i> Transferencia</label>
+                                    <button type="button" id="btn-todo-transferencia"
+                                        style="font-size:0.7rem; padding:1px 7px; border-radius:6px; border:1px solid #3498db; background:#3498db; color:white; cursor:pointer; line-height:1.6;">
+                                        Todo
+                                    </button>
                                 </div>
+                                <input type="text" id="modal-transferencia" class="form-control-custom" inputmode="numeric" autocomplete="off" value="">
+                                <input type="hidden" id="modal-transferencia-hidden" value="0">
                             </div>
                         </div>
                     </div>
@@ -320,8 +361,14 @@
     </div>
     <div class="card-body-custom">
         @if($productosTable->count() > 0)
+            <div style="position: relative; max-width: 320px; margin-bottom: 12px;">
+                <i class="bi bi-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#888; font-size:0.85rem;"></i>
+                <input type="text" id="buscadorProductosMesa" class="form-control-custom"
+                    placeholder="Buscar producto..."
+                    style="padding-left: 32px; height: 38px; font-size: 0.88rem;">
+            </div>
             <div class="table-responsive">
-                <table class="table-custom">
+                <table class="table-custom tabla-productos-mesa">
                     <thead>
                         <tr>
                             <th><i class="bi bi-box"></i> Producto</th>
@@ -335,7 +382,8 @@
                     </thead>
                     <tbody>
                         @foreach ($productosTable as $producto)
-                            <tr class="{{ $producto->estado === 'cancelacion_solicitada' ? 'table-warning' : '' }}">
+                            <tr class="fila-producto-mesa {{ $producto->estado === 'cancelacion_solicitada' ? 'table-warning' : '' }}"
+                                data-nombre="{{ strtolower($producto->producto->name) }}">
                                 <td data-label="Producto"><strong>{{ $producto->producto->name }}</strong></td>
                                 <td data-label="Mesero">
                                     <small class="text-primary">{{ $producto->usuario->name ?? 'N/A' }}</small>
@@ -405,6 +453,9 @@
                         </tr>
                     </tfoot>
                 </table>
+            <p id="sinResultadosProductosMesa" class="text-center text-muted mt-3" style="display:none;">
+                <i class="bi bi-search"></i> No se encontraron productos con ese nombre.
+            </p>
             </div>
         @else
             <div class="text-center py-5">
@@ -412,6 +463,23 @@
                 <p class="text-muted mt-3">No hay productos agregados a esta mesa</p>
             </div>
         @endif
+    </div>
+</div>
+
+<!-- Modal Factura Generada -->
+<div class="modal fade" id="modalFacturaOk" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius: 16px; border: none; text-align: center;">
+            <div class="modal-body p-4">
+                <div style="font-size: 3.5rem; line-height: 1;">✅</div>
+                <h5 class="mt-3 mb-1" style="font-weight: 700;">¡Factura Generada!</h5>
+                <p class="text-muted mb-4" style="font-size: 0.9rem;">La factura se abrió en una nueva pestaña.</p>
+                <button type="button" class="btn-success-custom w-100 justify-content-center"
+                    onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i> Nueva Mesa
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -463,26 +531,51 @@
         });
     });
     
-    var totalMesa = {{ $total }};
-    var propinaSugerida = {{ number_format(($total * env('PROPINA'))/100, 0, '', '') }};
-    
+    var totalMesa      = {{ $total }};
+    var propinaSugerida = {{ $propinaValor ?? 0 }};
+
+    // ── Helpers dinero ────────────────────────────────────────────────────────
+    function setMoney(displayId, hiddenId, value) {
+        var v = Math.max(0, Math.round(value));
+        document.getElementById(displayId).value = v > 0 ? '$ ' + v.toLocaleString('es-CO') : '';
+        document.getElementById(hiddenId).value  = v;
+    }
+    function getMoney(hiddenId) {
+        return parseFloat(document.getElementById(hiddenId).value) || 0;
+    }
+    function addMoneyHandlers(displayId, hiddenId, onChange) {
+        var el = document.getElementById(displayId);
+        var hd = document.getElementById(hiddenId);
+        if (!el) return;
+        el.addEventListener('input', function () {
+            var n = this.value.replace(/\D/g, '');
+            hd.value    = n || '0';
+            this.value  = n ? '$ ' + Number(n).toLocaleString('es-CO') : '';
+            if (onChange) onChange();
+        });
+        el.addEventListener('keydown', function (e) {
+            var ok = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
+            if (ok.includes(e.key)) return;
+            if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+            if (e.key < '0' || e.key > '9') e.preventDefault();
+        });
+    }
+
+    // ── actualizarTotales ────────────────────────────────────────────────────
     function actualizarTotales() {
-        var propina = parseFloat(document.getElementById('modal-propina').value) || 0;
-        var totalPagar = totalMesa + propina;
-        var efectivo = parseFloat(document.getElementById('modal-efectivo').value) || 0;
-        var transferencia = parseFloat(document.getElementById('modal-transferencia').value) || 0;
-        var sumaPagos = efectivo + transferencia;
-        
-        // Actualizar displays
-        document.getElementById('modal-propina-display').textContent = '$ ' + propina.toLocaleString('es-CO');
-        document.getElementById('modal-total-display').textContent = '$ ' + totalPagar.toLocaleString('es-CO');
-        document.getElementById('resumen-efectivo').textContent = '$ ' + efectivo.toLocaleString('es-CO');
-        document.getElementById('resumen-transferencia').textContent = '$ ' + transferencia.toLocaleString('es-CO');
-        
-        // Validar que la suma sea igual al total
-        var alerta = document.getElementById('alerta-pago');
+        var propina       = getMoney('modal-propina-hidden');
+        var totalPagar    = totalMesa + propina;
+        var efectivo      = getMoney('modal-efectivo-hidden');
+        var transferencia = getMoney('modal-transferencia-hidden');
+        var sumaPagos     = efectivo + transferencia;
+
+        document.getElementById('modal-propina-display').textContent     = '$ ' + propina.toLocaleString('es-CO');
+        document.getElementById('modal-total-display').textContent       = '$ ' + totalPagar.toLocaleString('es-CO');
+        document.getElementById('resumen-efectivo').textContent          = '$ ' + efectivo.toLocaleString('es-CO');
+        document.getElementById('resumen-transferencia').textContent     = '$ ' + transferencia.toLocaleString('es-CO');
+
+        var alerta      = document.getElementById('alerta-pago');
         var btnConfirmar = document.getElementById('confirmar-factura-btn');
-        
         if (Math.abs(sumaPagos - totalPagar) > 0.01) {
             alerta.classList.remove('d-none');
             btnConfirmar.disabled = true;
@@ -493,57 +586,113 @@
             btnConfirmar.style.opacity = '1';
         }
     }
-    
-    // Abrir modal al hacer clic en Generar Factura
+
+    // ── Propina: al cambiar, ajusta efectivo si transferencia es 0 ────────────
+    addMoneyHandlers('modal-propina', 'modal-propina-hidden', function () {
+        var totalPagar = totalMesa + getMoney('modal-propina-hidden');
+        if (getMoney('modal-transferencia-hidden') === 0) {
+            setMoney('modal-efectivo', 'modal-efectivo-hidden', totalPagar);
+        }
+        actualizarTotales();
+    });
+
+    // ── Efectivo / Transferencia: auto-ajuste recíproco ──────────────────────
+    var ajustando = false;
+    addMoneyHandlers('modal-efectivo', 'modal-efectivo-hidden', function () {
+        if (ajustando) return; ajustando = true;
+        var restante = Math.max(0, totalMesa + getMoney('modal-propina-hidden') - getMoney('modal-efectivo-hidden'));
+        setMoney('modal-transferencia', 'modal-transferencia-hidden', restante);
+        ajustando = false;
+        actualizarTotales();
+    });
+    addMoneyHandlers('modal-transferencia', 'modal-transferencia-hidden', function () {
+        if (ajustando) return; ajustando = true;
+        var restante = Math.max(0, totalMesa + getMoney('modal-propina-hidden') - getMoney('modal-transferencia-hidden'));
+        setMoney('modal-efectivo', 'modal-efectivo-hidden', restante);
+        ajustando = false;
+        actualizarTotales();
+    });
+
+    // ── Abrir modal ──────────────────────────────────────────────────────────
     document.getElementById('generar-factura-btn')?.addEventListener('click', function(event) {
         event.preventDefault();
-        // Resetear valores al abrir
         var totalPagar = totalMesa + propinaSugerida;
-        document.getElementById('modal-propina').value = propinaSugerida;
-        document.getElementById('modal-efectivo').value = totalPagar;
-        document.getElementById('modal-transferencia').value = 0;
+        setMoney('modal-propina',      'modal-propina-hidden',      propinaSugerida);
+        setMoney('modal-efectivo',     'modal-efectivo-hidden',     totalPagar);
+        setMoney('modal-transferencia','modal-transferencia-hidden', 0);
         actualizarTotales();
-        var modal = new bootstrap.Modal(document.getElementById('modalFactura'));
-        modal.show();
+        new bootstrap.Modal(document.getElementById('modalFactura')).show();
     });
-    
-    // Actualizar cuando cambia la propina
-    document.getElementById('modal-propina')?.addEventListener('input', function() {
-        var propina = parseFloat(this.value) || 0;
-        var totalPagar = totalMesa + propina;
-        // Auto-ajustar efectivo si transferencia es 0
-        var transferencia = parseFloat(document.getElementById('modal-transferencia').value) || 0;
-        if (transferencia === 0) {
-            document.getElementById('modal-efectivo').value = totalPagar;
-        }
+
+    // ── Botones "Todo" ────────────────────────────────────────────────────────
+    document.getElementById('btn-todo-efectivo')?.addEventListener('click', function () {
+        var totalPagar = totalMesa + getMoney('modal-propina-hidden');
+        setMoney('modal-efectivo',     'modal-efectivo-hidden',     totalPagar);
+        setMoney('modal-transferencia','modal-transferencia-hidden', 0);
         actualizarTotales();
     });
-    
-    // Actualizar cuando cambia efectivo
-    document.getElementById('modal-efectivo')?.addEventListener('input', actualizarTotales);
-    
-    // Actualizar cuando cambia transferencia
-    document.getElementById('modal-transferencia')?.addEventListener('input', actualizarTotales);
-    
-    // Confirmar y generar factura
+    document.getElementById('btn-todo-transferencia')?.addEventListener('click', function () {
+        var totalPagar = totalMesa + getMoney('modal-propina-hidden');
+        setMoney('modal-transferencia','modal-transferencia-hidden', totalPagar);
+        setMoney('modal-efectivo',     'modal-efectivo-hidden',     0);
+        actualizarTotales();
+    });
+
+    // ── Confirmar factura ─────────────────────────────────────────────────────
     document.getElementById('confirmar-factura-btn')?.addEventListener('click', function() {
-        var mesaId = document.getElementById('generar-factura-btn').getAttribute('data-mesa-id');
-        var propina = document.getElementById('modal-propina').value || 0;
-        var efectivo = document.getElementById('modal-efectivo').value || 0;
-        var transferencia = document.getElementById('modal-transferencia').value || 0;
-        
-        // Determinar método de pago
-        var metodoPago = 'Efectivo';
-        if (parseFloat(efectivo) > 0 && parseFloat(transferencia) > 0) {
-            metodoPago = 'Mixto';
-        } else if (parseFloat(transferencia) > 0) {
-            metodoPago = 'Transferencia';
-        }
-        
+        var mesaId        = document.getElementById('generar-factura-btn').getAttribute('data-mesa-id');
+        var propina       = getMoney('modal-propina-hidden');
+        var efectivo      = getMoney('modal-efectivo-hidden');
+        var transferencia = getMoney('modal-transferencia-hidden');
+        var metodoPago    = 'Efectivo';
+        if (efectivo > 0 && transferencia > 0) metodoPago = 'Mixto';
+        else if (transferencia > 0)            metodoPago = 'Transferencia';
         var url = '/generar-factura/' + mesaId + '?propina=' + propina + '&efectivo=' + efectivo + '&transferencia=' + transferencia + '&medio_pago=' + encodeURIComponent(metodoPago);
-        window.location.href = url;
+
+        // Abrir factura en nueva pestaña
+        window.open(url, '_blank');
+
+        // Cerrar modal de factura y mostrar popup de éxito
+        bootstrap.Modal.getInstance(document.getElementById('modalFactura'))?.hide();
+        new bootstrap.Modal(document.getElementById('modalFacturaOk')).show();
     });
     
+    // ── Formato descuento ────────────────────────────────────────────────────
+    const dicountDisplay = document.getElementById('dicountDisplay');
+    const dicountHidden  = document.getElementById('dicountHidden');
+
+    dicountDisplay?.addEventListener('input', function () {
+        const soloNumeros = this.value.replace(/\D/g, '');
+        dicountHidden.value = soloNumeros || '0';
+        this.value = soloNumeros
+            ? '$ ' + Number(soloNumeros).toLocaleString('es-CO')
+            : '';
+    });
+
+    dicountDisplay?.addEventListener('keydown', function (e) {
+        const permitidos = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
+        if (permitidos.includes(e.key)) return;
+        if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+        if (e.key < '0' || e.key > '9') e.preventDefault();
+    });
+
+    // ── Buscador productos en mesa ────────────────────────────────────────────
+    document.getElementById('buscadorProductosMesa')?.addEventListener('input', function () {
+        const q = this.value.toLowerCase().trim();
+        const filas = document.querySelectorAll('.fila-producto-mesa');
+        let visibles = 0;
+
+        filas.forEach(function (fila) {
+            const nombre = fila.dataset.nombre || '';
+            const coincide = nombre.includes(q);
+            fila.style.display = coincide ? '' : 'none';
+            if (coincide) visibles++;
+        });
+
+        document.getElementById('sinResultadosProductosMesa').style.display =
+            (visibles === 0 && q !== '') ? '' : 'none';
+    });
+
     // Modal de cancelación
     document.querySelectorAll('.btn-cancelar').forEach(function(btn) {
         btn.addEventListener('click', function() {
