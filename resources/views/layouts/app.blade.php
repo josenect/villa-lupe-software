@@ -771,11 +771,114 @@
         .total-row td {
             border-bottom: none !important;
         }
+
+        /* ===================== DARK MODE ===================== */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        body.dark-mode .navbar-custom {
+            background: rgba(22, 22, 40, 0.97);
+        }
+        body.dark-mode .navbar-brand,
+        body.dark-mode .nav-link {
+            color: #dde3f0 !important;
+        }
+        body.dark-mode .nav-link:hover,
+        body.dark-mode .nav-link.active {
+            background-color: #3498db;
+            color: white !important;
+        }
+        body.dark-mode .card-custom {
+            background: #1e2236;
+            color: #dde3f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        body.dark-mode .mesa-card {
+            background: #1e2236;
+            color: #dde3f0;
+        }
+        body.dark-mode .mesa-card.ocupada {
+            background: linear-gradient(135deg, #2c1a1a, #1e2236);
+        }
+        body.dark-mode .mesa-card h4,
+        body.dark-mode .mesa-info {
+            color: #dde3f0;
+        }
+        body.dark-mode .mesa-info { color: #9aa5c4; }
+        body.dark-mode .table-custom tbody tr {
+            background: #1e2236;
+            color: #dde3f0;
+        }
+        body.dark-mode .table-custom tbody tr:hover {
+            background: #252d4a;
+        }
+        body.dark-mode .table-custom tbody td {
+            border-bottom-color: #2e3a5a;
+            color: #dde3f0;
+        }
+        body.dark-mode .form-control-custom,
+        body.dark-mode .form-select-custom,
+        body.dark-mode input:not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]),
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background-color: #252d4a !important;
+            border-color: #3a4770 !important;
+            color: #dde3f0 !important;
+        }
+        body.dark-mode .form-label-custom,
+        body.dark-mode .section-title {
+            color: #dde3f0;
+        }
+        body.dark-mode .dropdown-menu {
+            background: #1e2236;
+            border: 1px solid #2e3a5a;
+        }
+        body.dark-mode .dropdown-item { color: #dde3f0; }
+        body.dark-mode .dropdown-item:hover { background: #3498db; color: white; }
+        body.dark-mode .dropdown-item-text small { color: #9aa5c4; }
+        body.dark-mode .dropdown-divider { border-color: #2e3a5a; }
+        body.dark-mode .text-muted { color: #9aa5c4 !important; }
+        body.dark-mode .alert-success-custom {
+            background: rgba(39,174,96,0.15);
+            color: #58d68d;
+        }
+        body.dark-mode .alert-error-custom {
+            background: rgba(231,76,60,0.15);
+            color: #f1948a;
+        }
+        body.dark-mode .footer-custom { background: rgba(0,0,0,0.35); }
+        body.dark-mode .modal-content {
+            background: #1e2236;
+            color: #dde3f0;
+        }
+        body.dark-mode .modal-header,
+        body.dark-mode .modal-footer { border-color: #2e3a5a; }
+        body.dark-mode .pago-box { background: #252d4a; }
+        body.dark-mode code { background: #252d4a; color: #58d68d; border-radius:4px; padding:2px 5px; }
+        body.dark-mode .table-responsive { background: transparent; }
+        /* Toggle button */
+        #darkModeToggle {
+            background: none;
+            border: 1.5px solid rgba(44,62,80,0.3);
+            border-radius: 20px;
+            padding: 0.35rem 0.7rem;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 1rem;
+            transition: var(--transition);
+            line-height: 1;
+        }
+        #darkModeToggle:hover { background: rgba(52,152,219,0.1); }
+        body.dark-mode #darkModeToggle {
+            border-color: rgba(200,210,240,0.3);
+            color: #dde3f0;
+        }
     </style>
-    
+
     @yield('styles')
 </head>
 <body>
+    <script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <!-- Navbar -->
     @php
         $navCocinaVisible     = \App\Models\Setting::get('menu_cocina_visible', '1') === '1';
@@ -859,6 +962,11 @@
                                             @endif
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.cancelaciones.historial') }}">
+                                            <i class="bi bi-clock-history"></i> Historial Cancelaciones
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                             <li class="nav-item dropdown">
@@ -899,6 +1007,13 @@
                             </li>
                         @endif
                         
+                        <!-- Dark mode toggle -->
+                        <li class="nav-item d-flex align-items-center mx-1">
+                            <button id="darkModeToggle" title="Modo oscuro">
+                                <i class="bi bi-moon-fill"></i>
+                            </button>
+                        </li>
+
                         <!-- Usuario y Logout -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -962,7 +1077,27 @@
     
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
+
+    <script>
+    (function() {
+        var btn = document.getElementById('darkModeToggle');
+        if (!btn) return;
+        var icon = btn.querySelector('i');
+        // Sync icon with current state
+        function syncIcon() {
+            icon.className = document.body.classList.contains('dark-mode')
+                ? 'bi bi-sun-fill'
+                : 'bi bi-moon-fill';
+        }
+        syncIcon();
+        btn.addEventListener('click', function() {
+            var isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            syncIcon();
+        });
+    })();
+    </script>
+
     @yield('scripts')
 </body>
 </html>

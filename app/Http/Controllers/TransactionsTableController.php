@@ -70,6 +70,13 @@ class TransactionsTableController extends Controller
         $productoTable->user_id = Auth::id();
         $productoTable->save();
 
+        // Registrar hora de ocupación si la mesa aún no tiene una
+        $mesaObj = Table::find($mesa_id);
+        if ($mesaObj && is_null($mesaObj->occupied_at)) {
+            $mesaObj->occupied_at = now();
+            $mesaObj->save();
+        }
+
         return redirect()->route('mesa.show', $mesa_id)->with('success', 'El producto ha sido cargado exitosamente.');
     }
 
@@ -180,5 +187,86 @@ class TransactionsTableController extends Controller
             ->get();
 
         return view('cancelaciones.pendientes', compact('cancelaciones'));
+    }
+
+    /**
+     * Historial de cancelaciones (aprobadas + rechazadas) con métricas y filtro de fecha
+     */
+    public function cancelacionesHistorial(Request $request)
+    {
+        date_default_timezone_set('America/Bogota');
+
+        $desde = $request->get('desde', date('Y-m-d'));
+        $hasta = $request->get('hasta', $desde);
+
+        $query = ElementTable::with(['producto', 'mesa', 'solicitadoPor', 'aprobadoPor'])
+            ->whereIn('estado', [ElementTable::ESTADO_CANCELADO, ElementTable::ESTADO_PENDIENTE])
+            ->whereNotNull('fecha_solicitud_cancelacion')
+            ->whereDate('fecha_solicitud_cancelacion', '>=', $desde)
+            ->whereDate('fecha_solicitud_cancelacion', '<=', $hasta)
+            ->orderBy('fecha_solicitud_cancelacion', 'desc');
+
+        $historial = $query->get();
+
+        $aprobadas  = $historial->where('estado', ElementTable::ESTADO_CANCELADO)->count();
+        $rechazadas = $historial->where('estado', ElementTable::ESTADO_PENDIENTE)
+                                ->whereNotNull('fecha_solicitud_cancelacion')->count();
+        $valorTotal = $historial->where('estado', ElementTable::ESTADO_CANCELADO)
+            ->sum(fn($e) => ($e->price - $e->dicount) * $e->amount);
+
+        return view('cancelaciones.historial', compact(
+            'historial', 'desde', 'hasta', 'aprobadas', 'rechazadas', 'valorTotal'
+        ));
+    }
+
+    /**
+     * Exportar historial de cancelaciones a CSV
+     */
+    public function exportarCancelacionesCSV(Request $request)
+    {
+        date_default_timezone_set('America/Bogota');
+
+        $desde = $request->get('desde', date('Y-m-d'));
+        $hasta = $request->get('hasta', $desde);
+
+        $historial = ElementTable::with(['producto', 'mesa', 'solicitadoPor', 'aprobadoPor'])
+            ->whereIn('estado', [ElementTable::ESTADO_CANCELADO, ElementTable::ESTADO_PENDIENTE])
+            ->whereNotNull('fecha_solicitud_cancelacion')
+            ->whereDate('fecha_solicitud_cancelacion', '>=', $desde)
+            ->whereDate('fecha_solicitud_cancelacion', '<=', $hasta)
+            ->orderBy('fecha_solicitud_cancelacion', 'desc')
+            ->get();
+
+        $filename = 'cancelaciones-' . $desde . ($desde !== $hasta ? '-a-' . $hasta : '') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+        ];
+
+        $callback = function () use ($historial) {
+            $output = fopen('php://output', 'w');
+            fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
+            fputcsv($output, ['Producto', 'Mesa', 'Cant.', 'Valor', 'Motivo', 'Solicitado por', 'Fecha Solicitud', 'Estado', 'Gestionado por', 'Fecha Gestión']);
+            foreach ($historial as $e) {
+                $estado = $e->estado === ElementTable::ESTADO_CANCELADO ? 'Aprobada' : 'Rechazada';
+                fputcsv($output, [
+                    $e->producto->name ?? '—',
+                    $e->mesa->name ?? '—',
+                    $e->amount,
+                    ($e->price - $e->dicount) * $e->amount,
+                    $e->motivo_cancelacion,
+                    $e->solicitadoPor->name ?? '—',
+                    $e->fecha_solicitud_cancelacion,
+                    $estado,
+                    $e->aprobadoPor->name ?? '—',
+                    $e->fecha_cancelacion ?? '—',
+                ]);
+            }
+            fclose($output);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

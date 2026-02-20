@@ -76,10 +76,13 @@ class FacturaController extends Controller
                 $facturaDeTalle->amount = $value->amount;
                 $facturaDeTalle->discount = $value->dicount;
                 $facturaDeTalle->record = $value->record;
-    
+
                 $facturaDeTalle->save();
             }
-         
+
+            // Liberar occupied_at al facturar la mesa
+            Table::where('id', $mesaId)->update(['occupied_at' => null]);
+
         }else{
             $ultimaFactura = Factura::where('table_id', $mesaId)
             ->where('estado', Factura::ESTADO_ACTIVA)
@@ -297,7 +300,10 @@ class FacturaController extends Controller
                 $elementTable->save();
             }
             
-            // 2. Marcar la factura como reabierta/anulada
+            // 2. Restaurar occupied_at en la mesa al reabrir
+            Table::where('id', $factura->table_id)->whereNull('occupied_at')->update(['occupied_at' => now()]);
+
+            // 3. Marcar la factura como reabierta/anulada
             $factura->estado = Factura::ESTADO_REABIERTA;
             $factura->motivo_anulacion = $request->input('motivo', 'Factura reabierta - productos cargados a la mesa');
             $factura->fecha_anulacion = now();
@@ -312,6 +318,170 @@ class FacturaController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'Error al reabrir la factura: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Exportar el informe activo a CSV (facturas, productos, cocina, o categoría)
+     */
+    public function exportarCSV($date, Request $request)
+    {
+        date_default_timezone_set('America/Bogota');
+
+        $desde = $date;
+        $hasta = $request->get('hasta', $date);
+        $data  = $request->get('data', 'facturas');
+
+        $esCat      = str_starts_with($data, 'cat-');
+        $esCocina   = $data === 'cocina';
+        $esFacturas = $data === 'facturas';
+        $slug       = $esCat ? substr($data, 4) : null;
+
+        $facturasIds = Factura::whereDate('created_at', '>=', $desde)
+            ->whereDate('created_at', '<=', $hasta)
+            ->where('estado', Factura::ESTADO_ACTIVA)
+            ->pluck('id')->toArray();
+
+        // ── Facturas ──────────────────────────────────────────────────────────
+        if ($esFacturas) {
+            $rows = Factura::with('mesa', 'usuario')
+                ->whereIn('id', $facturasIds)
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            $filename = 'facturas-' . $desde . ($desde !== $hasta ? '-a-' . $hasta : '') . '.csv';
+            $callback = function () use ($rows) {
+                $out = fopen('php://output', 'w');
+                fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+                fputcsv($out, ['Folio', 'Mesa', 'Mesero', 'Fecha', 'Hora', 'Subtotal', 'Propina', 'Total', 'Medio Pago']);
+                foreach ($rows as $f) {
+                    fputcsv($out, [
+                        $f->numero_factura,
+                        $f->mesa->name    ?? '—',
+                        $f->usuario->name ?? '—',
+                        $f->created_at->format('Y-m-d'),
+                        $f->created_at->format('H:i'),
+                        $f->valor_total,
+                        $f->valor_propina,
+                        $f->valor_pagado,
+                        $f->medio_pago ?? 'Efectivo',
+                    ]);
+                }
+                fclose($out);
+            };
+
+        // ── Productos (todos) ─────────────────────────────────────────────────
+        } elseif ($data === 'productos') {
+            $rows = DetalleFactura::select(
+                    'productos.name',
+                    'productos.category',
+                    DB::raw('SUM(detalle_facturas.amount) as cantidad'),
+                    'detalle_facturas.price as precio',
+                    'detalle_facturas.discount as descuento'
+                )
+                ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
+                ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
+                ->whereIn('facturas.id', $facturasIds)
+                ->groupBy('productos.name', 'productos.category', 'detalle_facturas.price', 'detalle_facturas.discount')
+                ->orderByDesc('cantidad')
+                ->get();
+
+            $filename = 'productos-' . $desde . ($desde !== $hasta ? '-a-' . $hasta : '') . '.csv';
+            $callback = function () use ($rows) {
+                $out = fopen('php://output', 'w');
+                fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+                fputcsv($out, ['Producto', 'Categoría', 'Cantidad', 'Precio Unit.', 'Total']);
+                foreach ($rows as $p) {
+                    fputcsv($out, [
+                        $p->name,
+                        $p->category,
+                        $p->cantidad,
+                        $p->precio - $p->descuento,
+                        ($p->precio - $p->descuento) * $p->cantidad,
+                    ]);
+                }
+                fclose($out);
+            };
+
+        // ── Cocina (todas las categorías es_cocina) ───────────────────────────
+        } elseif ($esCocina) {
+            $slugsCocina = Categoria::where('es_cocina', true)->where('activo', true)->pluck('slug')->toArray();
+
+            $rows = DetalleFactura::select(
+                    'productos.name',
+                    'productos.category',
+                    DB::raw('SUM(detalle_facturas.amount) as cantidad'),
+                    'detalle_facturas.price as precio',
+                    'detalle_facturas.discount as descuento'
+                )
+                ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
+                ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
+                ->whereIn('facturas.id', $facturasIds)
+                ->whereIn('productos.category', $slugsCocina)
+                ->groupBy('productos.name', 'productos.category', 'detalle_facturas.price', 'detalle_facturas.discount')
+                ->orderByDesc('cantidad')
+                ->get();
+
+            $filename = 'cocina-' . $desde . ($desde !== $hasta ? '-a-' . $hasta : '') . '.csv';
+            $callback = function () use ($rows) {
+                $out = fopen('php://output', 'w');
+                fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+                fputcsv($out, ['Producto', 'Categoría', 'Cantidad', 'Precio Unit.', 'Total']);
+                foreach ($rows as $p) {
+                    fputcsv($out, [
+                        $p->name,
+                        $p->category,
+                        $p->cantidad,
+                        $p->precio - $p->descuento,
+                        ($p->precio - $p->descuento) * $p->cantidad,
+                    ]);
+                }
+                fclose($out);
+            };
+
+        // ── Categoría específica ──────────────────────────────────────────────
+        } elseif ($esCat && $slug) {
+            $rows = DetalleFactura::select(
+                    'productos.name',
+                    'productos.category',
+                    DB::raw('SUM(detalle_facturas.amount) as cantidad'),
+                    'detalle_facturas.price as precio',
+                    'detalle_facturas.discount as descuento'
+                )
+                ->join('facturas', 'detalle_facturas.factura_id', '=', 'facturas.id')
+                ->join('productos', 'detalle_facturas.producto_id', '=', 'productos.id')
+                ->whereIn('facturas.id', $facturasIds)
+                ->where('productos.category', $slug)
+                ->groupBy('productos.name', 'productos.category', 'detalle_facturas.price', 'detalle_facturas.discount')
+                ->orderByDesc('cantidad')
+                ->get();
+
+            $filename = 'categoria-' . $slug . '-' . $desde . ($desde !== $hasta ? '-a-' . $hasta : '') . '.csv';
+            $callback = function () use ($rows) {
+                $out = fopen('php://output', 'w');
+                fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+                fputcsv($out, ['Producto', 'Cantidad', 'Precio Unit.', 'Total']);
+                foreach ($rows as $p) {
+                    fputcsv($out, [
+                        $p->name,
+                        $p->cantidad,
+                        $p->precio - $p->descuento,
+                        ($p->precio - $p->descuento) * $p->cantidad,
+                    ]);
+                }
+                fclose($out);
+            };
+
+        } else {
+            return redirect()->back();
+        }
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+        ];
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**

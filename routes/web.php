@@ -99,6 +99,7 @@ Route::middleware(['role'])->group(function () {
         // Gestionar facturas y reportes
         Route::prefix('admin/facturas')->group(function () {
             Route::get('/{date}', [FacturaController::class, 'showFacturaAdmin'])->name('admin.factura.showAll');
+            Route::get('/{date}/export-csv', [FacturaController::class, 'exportarCSV'])->name('admin.factura.exportarCSV');
             Route::get('/detalle/{facturaId}', [FacturaController::class, 'showDetalle'])->name('admin.factura.detalle');
             Route::get('/anular/{facturaId}', [FacturaController::class, 'showAnular'])->name('admin.factura.showAnular');
             Route::post('/anular/{facturaId}', [FacturaController::class, 'anular'])->name('admin.factura.anular');
@@ -119,6 +120,9 @@ Route::middleware(['role'])->group(function () {
         Route::get('admin/cancelaciones', [TransactionsTableController::class, 'cancelacionesPendientes'])->name('admin.cancelaciones.pendientes');
         Route::post('admin/cancelaciones/{id}/aprobar', [TransactionsTableController::class, 'aprobarCancelacion'])->name('admin.cancelacion.aprobar');
         Route::post('admin/cancelaciones/{id}/rechazar', [TransactionsTableController::class, 'rechazarCancelacion'])->name('admin.cancelacion.rechazar');
+        // Historial y exportar cancelaciones
+        Route::get('admin/cancelaciones/historial', [TransactionsTableController::class, 'cancelacionesHistorial'])->name('admin.cancelaciones.historial');
+        Route::get('admin/cancelaciones/historial/export', [TransactionsTableController::class, 'exportarCancelacionesCSV'])->name('admin.cancelaciones.exportarCSV');
 
         // Pedidos por mesero (admin)
         Route::get('admin/pedidos-meseros', [App\Http\Controllers\AdminPedidosController::class, 'index'])->name('admin.pedidos.meseros');

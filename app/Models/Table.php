@@ -20,5 +20,10 @@ class Table extends Model
         'name',
         'location',
         'status',
+        'occupied_at',
+    ];
+
+    protected $casts = [
+        'occupied_at' => 'datetime',
     ];
 }

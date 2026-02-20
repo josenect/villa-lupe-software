@@ -133,9 +133,17 @@
         <div class="card-custom h-100">
             <div class="card-header-custom d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Mesa</h2>
-                <span class="status-badge {{ $mesa->status == 'Ocupada' ? 'ocupada' : 'disponible' }}" style="font-size: 1rem;">
-                    {{ $mesa->status }}
-                </span>
+                <div class="d-flex align-items-center gap-2">
+                    @if($mesa->occupied_at && $productosTable->count() > 0)
+                        <span class="badge bg-dark bg-opacity-50 d-flex align-items-center gap-1" style="font-size:0.85rem; padding:6px 10px; border-radius:20px;">
+                            <i class="bi bi-clock-history"></i>
+                            <span id="tiempo-en-mesa" data-since="{{ $mesa->occupied_at->toIso8601String() }}">—</span>
+                        </span>
+                    @endif
+                    <span class="status-badge {{ $mesa->status == 'Ocupada' ? 'ocupada' : 'disponible' }}" style="font-size: 1rem;">
+                        {{ $mesa->status }}
+                    </span>
+                </div>
             </div>
             <div class="card-body-custom">
                 <div class="row">
@@ -520,6 +528,21 @@
 @endsection
 
 @section('scripts')
+<script>
+// Tiempo en mesa
+(function() {
+    var el = document.getElementById('tiempo-en-mesa');
+    if (!el) return;
+    function fmt(since) {
+        var diff = Math.floor((Date.now() - new Date(since)) / 1000);
+        if (diff < 60) return diff + 's';
+        var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60);
+        return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+    }
+    el.textContent = fmt(el.dataset.since);
+    setInterval(function() { el.textContent = fmt(el.dataset.since); }, 30000);
+})();
+</script>
 <script src="/bookstores/jquery/jquery-3.7.1.min.js.js"></script>
 <script src="/bookstores/select2/dist/js/select2.full.min.js"></script>
 <script>

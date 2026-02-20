@@ -45,21 +45,37 @@
         <button type="button" class="btn-primary-custom" onclick="aplicarRango()">
             <i class="bi bi-search"></i> Buscar
         </button>
+        <a id="btn-export-csv" href="/admin/facturas/{{ $desde }}/export-csv?data={{ $dataActual }}{{ $desde !== $hasta ? '&hasta='.$hasta : '' }}" class="btn-success-custom">
+            <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+        </a>
         <a href="/" class="btn-secondary-custom">
             <i class="bi bi-arrow-left"></i> Inicio
         </a>
     </div>
 </div>
 <script>
+var _dataActual = '{{ $dataActual }}';
+
 function aplicarRango() {
     var desde = document.getElementById('input-desde').value;
     var hasta = document.getElementById('input-hasta').value;
     if (!desde) return;
-    var data  = '{{ $dataActual }}';
-    var url   = '/admin/facturas/' + desde + '?data=' + data;
+    var url = '/admin/facturas/' + desde + '?data=' + _dataActual;
     if (hasta && hasta !== desde) url += '&hasta=' + hasta;
     window.location.href = url;
 }
+
+function actualizarBtnCSV() {
+    var desde = document.getElementById('input-desde').value || '{{ $desde }}';
+    var hasta = document.getElementById('input-hasta').value || '{{ $hasta }}';
+    var url = '/admin/facturas/' + desde + '/export-csv?data=' + _dataActual;
+    if (hasta && hasta !== desde) url += '&hasta=' + hasta;
+    var btn = document.getElementById('btn-export-csv');
+    if (btn) btn.href = url;
+}
+
+document.getElementById('input-desde')?.addEventListener('change', actualizarBtnCSV);
+document.getElementById('input-hasta')?.addEventListener('change', actualizarBtnCSV);
 document.getElementById('input-desde')?.addEventListener('keydown', function(e){ if(e.key==='Enter') aplicarRango(); });
 document.getElementById('input-hasta')?.addEventListener('keydown', function(e){ if(e.key==='Enter') aplicarRango(); });
 </script>
