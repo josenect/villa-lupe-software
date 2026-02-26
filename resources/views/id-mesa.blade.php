@@ -26,7 +26,7 @@
         background-color: #3498db;
     }
     .pago-box {
-        padding: 10px;
+        padding: 6px 8px;
         border-radius: 10px;
         background: #f8f9fa;
     }
@@ -157,6 +157,9 @@
                                 <a target="_blank" href="/visual-pdf-pre/{{ $mesa->id }}" class="btn-warning-custom">
                                     <i class="bi bi-printer"></i> Preliminar
                                 </a>
+                                <a target="_blank" href="/comanda/{{ $mesa->id }}" class="btn-primary-custom">
+                                    <i class="bi bi-journal-text"></i> Comanda
+                                </a>
                                 @if(auth()->user() && auth()->user()->esAdmin())
                                     <a href="#" id="generar-factura-btn" data-mesa-id="{{ $mesa->id }}" class="btn-success-custom">
                                         <i class="bi bi-receipt"></i> Facturar
@@ -179,11 +182,18 @@
     <div class="col-md-4">
         <div class="card-custom h-100">
             <div class="card-body-custom text-center d-flex flex-column justify-content-center">
+                @php
+                    $cardPropinaHabilitada = \App\Models\Setting::get('propina_habilitada', '1') === '1';
+                    $cardPropinaPct        = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
+                    $cardPropinaValor      = $cardPropinaHabilitada ? (int)(floor($total * $cardPropinaPct / 100 / 1000) * 1000) : 0;
+                @endphp
                 <h5 class="text-muted mb-3">Total Actual</h5>
                 <h2 class="text-primary mb-2" style="font-size: 2.5rem;">$ {{ number_format($total, 0, ',', '.') }}</h2>
+                @if($cardPropinaHabilitada)
                 <p class="text-muted mb-0">
-                    <small>Propina sugerida ({{ env('PROPINA') }}%): <strong>$ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</strong></small>
+                    <small>Propina sugerida ({{ $cardPropinaPct }}%): <strong>$ {{ number_format($cardPropinaValor, 0, ',', '.') }}</strong></small>
                 </p>
+                @endif
             </div>
         </div>
     </div>
@@ -251,27 +261,29 @@
 <div class="modal fade" id="modalFactura" tabindex="-1" aria-labelledby="modalFacturaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 16px; border: none;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border-radius: 16px 16px 0 0;">
-                <h5 class="modal-title" id="modalFacturaLabel">
-                    <i class="bi bi-receipt"></i> Generar Factura
-                </h5>
+            <div class="modal-header py-2" style="background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border-radius: 16px 16px 0 0;">
+                <div>
+                    <h5 class="modal-title mb-0" id="modalFacturaLabel">
+                        <i class="bi bi-receipt"></i> Generar Factura
+                    </h5>
+                    <div class="small opacity-75">Total mesa: $ {{ number_format($total, 0, ',', '.') }}</div>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <div class="text-center mb-3">
-                    <h6 class="text-muted mb-2">Total de la Mesa</h6>
-                    <h2 class="text-primary mb-0">$ {{ number_format($total, 0, ',', '.') }}</h2>
-                </div>
-                
+            <div class="modal-body p-3">
                 @php
                     $propinaHabilitada  = \App\Models\Setting::get('propina_habilitada', '1') === '1';
                     $propinaPorcentaje  = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
-                    $propinaValor       = $propinaHabilitada ? round($total * $propinaPorcentaje / 100) : 0;
+                    $propinaValor       = $propinaHabilitada ? (int)(floor($total * $propinaPorcentaje / 100 / 1000) * 1000) : 0;
                 @endphp
                 @if($propinaHabilitada)
-                <div class="mb-3">
-                    <label class="form-label-custom">
-                        <i class="bi bi-heart text-danger"></i> Propina
+                <div class="mb-2">
+                    <label class="form-label-custom d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-heart text-danger"></i> Propina</span>
+                        <button type="button" id="btn-toggle-propina"
+                            style="font-size:0.75rem; padding:2px 10px; border-radius:20px; border:1.5px solid #27ae60; background:#27ae60; color:white; cursor:pointer; line-height:1.8; transition:all 0.2s;">
+                            <i class="bi bi-check-circle-fill"></i> Con propina
+                        </button>
                     </label>
                     <input type="text" id="modal-propina" class="form-control-custom" inputmode="numeric" autocomplete="off"
                         value="{{ $propinaValor > 0 ? '$ ' . number_format($propinaValor, 0, ',', '.') : '' }}">
@@ -285,7 +297,7 @@
                 <input type="hidden" id="modal-propina-hidden" value="0">
                 @endif
                 
-                <div class="mb-3">
+                <div class="mb-2">
                     <label class="form-label-custom">
                         <i class="bi bi-credit-card"></i> Forma de Pago
                     </label>
@@ -300,8 +312,8 @@
                                     </button>
                                 </div>
                                 <input type="text" id="modal-efectivo" class="form-control-custom" inputmode="numeric" autocomplete="off"
-                                    value="{{ ($total + ($total * env('PROPINA'))/100) > 0 ? '$ ' . number_format($total + ($total * env('PROPINA'))/100, 0, ',', '.') : '' }}">
-                                <input type="hidden" id="modal-efectivo-hidden" value="{{ $total + number_format(($total * env('PROPINA'))/100, 0, '', '') }}">
+                                    value="{{ ($total + $propinaValor) > 0 ? '$ ' . number_format($total + $propinaValor, 0, ',', '.') : '' }}">
+                                <input type="hidden" id="modal-efectivo-hidden" value="{{ $total + $propinaValor }}">
                             </div>
                         </div>
                         <div class="col-6">
@@ -321,28 +333,28 @@
                     <small class="text-muted">Puede dividir el pago entre efectivo y transferencia</small>
                 </div>
                 
-                <div class="bg-light p-3 rounded-3">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Subtotal:</span>
-                        <span>$ {{ number_format($total, 0, ',', '.') }}</span>
+                {{-- Paga con / Vueltas --}}
+                <div class="mb-2">
+                    <label class="form-label-custom mb-1">
+                        <i class="bi bi-cash-coin"></i> Paga con
+                        <small class="text-muted fw-normal">(para calcular vueltas)</small>
+                        <span id="vueltas-wrap" class="d-none ms-2">
+                            <span class="fw-semibold" id="vueltas-label">Vueltas:</span>
+                            <span id="vueltas-valor" class="fw-bold ms-1"></span>
+                        </span>
+                    </label>
+                    <input type="text" id="modal-paga-con" class="form-control-custom" inputmode="numeric" autocomplete="off" placeholder="$ 0">
+                </div>
+
+                <div class="bg-light p-2 rounded-3 small">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Sub: $ {{ number_format($total, 0, ',', '.') }} + Prop: <span id="modal-propina-display">$ {{ number_format($propinaValor, 0, ',', '.') }}</span></span>
+                        <strong class="text-success fs-6" id="modal-total-display">$ {{ number_format($total + $propinaValor, 0, ',', '.') }}</strong>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Propina:</span>
-                        <span id="modal-propina-display">$ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between mb-2">
-                        <strong>Total a Pagar:</strong>
-                        <strong class="text-success" id="modal-total-display">$ {{ number_format($total + (($total * env('PROPINA'))/100), 0, ',', '.') }}</strong>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between mb-1 small">
-                        <span class="text-success"><i class="bi bi-cash-stack"></i> Efectivo:</span>
-                        <span id="resumen-efectivo">$ {{ number_format($total + (($total * env('PROPINA'))/100), 0, ',', '.') }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between small">
-                        <span class="text-primary"><i class="bi bi-phone"></i> Transferencia:</span>
-                        <span id="resumen-transferencia">$ 0</span>
+                    <hr class="my-1">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-cash-stack text-success"></i> Efect: <span id="resumen-efectivo">$ {{ number_format($total + $propinaValor, 0, ',', '.') }}</span></span>
+                        <span><i class="bi bi-phone text-primary"></i> Trans: <span id="resumen-transferencia">$ 0</span></span>
                     </div>
                 </div>
                 
@@ -350,7 +362,7 @@
                     <i class="bi bi-exclamation-triangle"></i> La suma de efectivo y transferencia debe ser igual al total a pagar.
                 </div>
             </div>
-            <div class="modal-footer" style="border: none;">
+            <div class="modal-footer py-2" style="border: none;">
                 <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg"></i> Cancelar
                 </button>
@@ -392,7 +404,10 @@
                         @foreach ($productosTable as $producto)
                             <tr class="fila-producto-mesa {{ $producto->estado === 'cancelacion_solicitada' ? 'table-warning' : '' }}"
                                 data-nombre="{{ strtolower($producto->producto->name) }}">
-                                <td data-label="Producto"><strong>{{ $producto->producto->name }}</strong></td>
+                                <td data-label="Producto">
+                                    <strong>{{ $producto->producto->name }}</strong>
+                                    <br><small class="text-muted"><i class="bi bi-clock"></i> {{ $producto->created_at->format('H:i') }}</small>
+                                </td>
                                 <td data-label="Mesero">
                                     <small class="text-primary">{{ $producto->usuario->name ?? 'N/A' }}</small>
                                 </td>
@@ -456,7 +471,9 @@
                             <td colspan="2" class="text-end"><strong>TOTAL:</strong></td>
                             <td><strong>$ {{ number_format($total, 0, ',', '.') }}</strong></td>
                             <td colspan="3">
-                                <small>Propina sugerida: $ {{ number_format(($total * env('PROPINA'))/100, 0, ',', '.') }}</small>
+                                @if($cardPropinaHabilitada)
+                                <small>Propina sugerida ({{ $cardPropinaPct }}%): $ {{ number_format($cardPropinaValor, 0, ',', '.') }}</small>
+                                @endif
                             </td>
                         </tr>
                     </tfoot>
@@ -660,6 +677,63 @@
         setMoney('modal-efectivo',     'modal-efectivo-hidden',     0);
         actualizarTotales();
     });
+
+    // ── Toggle propina ────────────────────────────────────────────────────────
+    document.getElementById('btn-toggle-propina')?.addEventListener('click', function() {
+        var actual = getMoney('modal-propina-hidden');
+        var nueva  = actual > 0 ? 0 : propinaSugerida;
+        setMoney('modal-propina', 'modal-propina-hidden', nueva);
+        if (getMoney('modal-transferencia-hidden') === 0) {
+            setMoney('modal-efectivo', 'modal-efectivo-hidden', totalMesa + nueva);
+        }
+        actualizarTotales();
+        calcularVueltas();
+        if (nueva > 0) {
+            this.style.background    = '#27ae60';
+            this.style.borderColor   = '#27ae60';
+            this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Con propina';
+        } else {
+            this.style.background    = '#95a5a6';
+            this.style.borderColor   = '#95a5a6';
+            this.innerHTML = '<i class="bi bi-x-circle-fill"></i> Sin propina';
+        }
+    });
+
+    // ── Paga con / Vueltas ────────────────────────────────────────────────────
+    function calcularVueltas() {
+        var pagaCon  = parseFloat(document.getElementById('modal-paga-con').value.replace(/\D/g, '')) || 0;
+        var efectivo = getMoney('modal-efectivo-hidden');
+        var wrap     = document.getElementById('vueltas-wrap');
+        var label    = document.getElementById('vueltas-label');
+        var valor    = document.getElementById('vueltas-valor');
+        if (pagaCon <= 0) { wrap.classList.add('d-none'); return; }
+        wrap.classList.remove('d-none');
+        var vueltas = pagaCon - efectivo;
+        if (vueltas >= 0) {
+            label.textContent        = 'Vueltas:';
+            valor.textContent        = '$ ' + vueltas.toLocaleString('es-CO');
+            valor.style.color        = '#27ae60';
+        } else {
+            label.textContent        = 'Falta:';
+            valor.textContent        = '$ ' + Math.abs(vueltas).toLocaleString('es-CO');
+            valor.style.color        = '#e74c3c';
+        }
+    }
+    (function() {
+        var el = document.getElementById('modal-paga-con');
+        if (!el) return;
+        el.addEventListener('input', function() {
+            var n = this.value.replace(/\D/g, '');
+            this.value = n ? '$ ' + Number(n).toLocaleString('es-CO') : '';
+            calcularVueltas();
+        });
+        el.addEventListener('keydown', function(e) {
+            var ok = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
+            if (ok.includes(e.key)) return;
+            if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+            if (e.key < '0' || e.key > '9') e.preventDefault();
+        });
+    })();
 
     // ── Confirmar factura ─────────────────────────────────────────────────────
     document.getElementById('confirmar-factura-btn')?.addEventListener('click', function() {

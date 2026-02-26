@@ -995,6 +995,11 @@
                                             <i class="bi bi-clipboard-list"></i> Pedidos por Mesero
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.pendientes') }}">
+                                            <i class="bi bi-hourglass-split"></i> Pendientes por Cobrar
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                         @endif

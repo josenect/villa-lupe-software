@@ -127,6 +127,10 @@ Route::middleware(['role'])->group(function () {
         // Pedidos por mesero (admin)
         Route::get('admin/pedidos-meseros', [App\Http\Controllers\AdminPedidosController::class, 'index'])->name('admin.pedidos.meseros');
 
+        // Pendientes por cobrar
+        Route::get('admin/pendientes', [TransactionsTableController::class, 'pendientesCobro'])->name('admin.pendientes');
+        Route::get('admin/pendientes/imprimir', [TransactionsTableController::class, 'imprimirPendientes'])->name('admin.pendientes.imprimir');
+
         // Gestionar categorías
         Route::prefix('admin/categorias')->group(function () {
             Route::get('', [CategoriaController::class, 'index'])->name('admin.categorias.index');
@@ -168,3 +172,6 @@ Route::get('visual-factura/{factura}', [FacturaController::class, 'visualFactura
 
 // Generar pdf preliminar
 Route::get('generar-pdf-pre/{mesa_id}', [PdfController::class, 'generarPdf'])->name('pdf.generar');
+
+// Comanda de cocina
+Route::get('comanda/{mesa_id}', [PdfController::class, 'comanda'])->name('pdf.comanda');

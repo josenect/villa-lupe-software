@@ -43,7 +43,11 @@
         th, td {
             font-size: 13px;
             padding: 1px 0;
+            vertical-align: top;
         }
+
+        .num { width: 1%; white-space: nowrap; padding-left: 4px; }
+        .col-product { word-break: break-word; overflow-wrap: break-word; padding-right: 2px; }
         
         .anulada-marca {
             color: red;
@@ -100,22 +104,22 @@
         </p>
     @endif
     
-    <table>
+    <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="text-align:left;">Ud</th>
+                <th class="num" style="text-align:left;">Ud</th>
                 <th style="text-align:left;">Producto</th>
-                <th style="text-align:right;">Precio</th>
-                <th style="text-align:right;">Total</th>
+                <th class="num" style="text-align:right;">Precio</th>
+                <th class="num" style="text-align:right;">Total</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($productosFactura as $producto)
                 <tr>
-                    <td style="text-align:left;">{{ $producto->amount }}</td>
-                    <td style="text-align:left;">{{ $producto->producto->name }}</td>
-                    <td style="text-align:right;">{{ number_format(($producto->price - $producto->discount), 0, ',', '.') }}</td>
-                    <td style="text-align:right;">{{ number_format(($producto->price - $producto->discount) * $producto->amount, 0, ',', '.') }}</td>
+                    <td class="num" style="text-align:left;">{{ $producto->amount }}</td>
+                    <td class="col-product" style="text-align:left;">{{ $producto->producto->name }}</td>
+                    <td class="num" style="text-align:right;">{{ number_format(($producto->price - $producto->discount), 0, ',', '.') }}</td>
+                    <td class="num" style="text-align:right;">{{ number_format(($producto->price - $producto->discount) * $producto->amount, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
             <tr>

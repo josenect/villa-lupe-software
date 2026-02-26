@@ -79,4 +79,18 @@ class PdfController extends Controller
 
         return view('pdf.detalle-mesa', compact('mesa', 'productosTable', 'subtotal','descuentoTotal', 'total'))->render();
     }
+
+    public function comanda($mesa_id)
+    {
+        date_default_timezone_set('America/Bogota');
+        $mesa = Table::findOrFail($mesa_id);
+
+        $productosTable = ElementTable::with('producto')
+            ->where('status', 1)
+            ->where('table_id', $mesa_id)
+            ->whereNotIn('estado', [ElementTable::ESTADO_CANCELADO, ElementTable::ESTADO_CANCELACION_SOLICITADA])
+            ->get();
+
+        return view('pdf.comanda', compact('mesa', 'productosTable'));
+    }
 }

@@ -26,4 +26,9 @@ class Table extends Model
     protected $casts = [
         'occupied_at' => 'datetime',
     ];
+
+    public function elementTables()
+    {
+        return $this->hasMany(ElementTable::class, 'table_id');
+    }
 }

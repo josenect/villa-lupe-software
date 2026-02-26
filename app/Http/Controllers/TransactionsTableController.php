@@ -269,4 +269,67 @@ class TransactionsTableController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function pendientesCobro()
+    {
+        $propinaHabilitada = \App\Models\Setting::get('propina_habilitada', '1') === '1';
+        $propinaPct        = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
+
+        // Mesas ocupadas con productos activos
+        $mesas = Table::where('status', 1)
+            ->with(['elementTables' => function ($q) {
+                $q->where('status', 1)
+                  ->whereNotIn('estado', [ElementTable::ESTADO_CANCELADO, ElementTable::ESTADO_CANCELACION_SOLICITADA])
+                  ->with('producto');
+            }])
+            ->get()
+            ->filter(fn($m) => $m->elementTables->count() > 0)
+            ->map(function ($mesa) use ($propinaHabilitada, $propinaPct) {
+                $subtotal = $mesa->elementTables->sum(fn($e) => ($e->price - $e->dicount) * $e->amount);
+                $propina  = $propinaHabilitada ? (int)(floor($subtotal * $propinaPct / 100 / 1000) * 1000) : 0;
+                $mesa->subtotal_pendiente = $subtotal;
+                $mesa->propina_pendiente  = $propina;
+                $mesa->total_pendiente    = $subtotal + $propina;
+                return $mesa;
+            })
+            ->sortByDesc('total_pendiente')
+            ->values();
+
+        $totalGlobal  = $mesas->sum('subtotal_pendiente');
+        $propinaGlobal = $mesas->sum('propina_pendiente');
+        $granTotal    = $mesas->sum('total_pendiente');
+
+        return view('admin.pendientes', compact('mesas', 'totalGlobal', 'propinaGlobal', 'granTotal', 'propinaHabilitada', 'propinaPct'));
+    }
+
+    public function imprimirPendientes()
+    {
+        $propinaHabilitada = \App\Models\Setting::get('propina_habilitada', '1') === '1';
+        $propinaPct        = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
+
+        $mesas = Table::where('status', 1)
+            ->with(['elementTables' => function ($q) {
+                $q->where('status', 1)
+                  ->whereNotIn('estado', [ElementTable::ESTADO_CANCELADO, ElementTable::ESTADO_CANCELACION_SOLICITADA])
+                  ->with('producto');
+            }])
+            ->get()
+            ->filter(fn($m) => $m->elementTables->count() > 0)
+            ->map(function ($mesa) use ($propinaHabilitada, $propinaPct) {
+                $subtotal = $mesa->elementTables->sum(fn($e) => ($e->price - $e->dicount) * $e->amount);
+                $propina  = $propinaHabilitada ? (int)(floor($subtotal * $propinaPct / 100 / 1000) * 1000) : 0;
+                $mesa->subtotal_pendiente = $subtotal;
+                $mesa->propina_pendiente  = $propina;
+                $mesa->total_pendiente    = $subtotal + $propina;
+                return $mesa;
+            })
+            ->sortByDesc('total_pendiente')
+            ->values();
+
+        $totalGlobal   = $mesas->sum('subtotal_pendiente');
+        $propinaGlobal = $mesas->sum('propina_pendiente');
+        $granTotal     = $mesas->sum('total_pendiente');
+
+        return view('pdf.pendientes', compact('mesas', 'totalGlobal', 'propinaGlobal', 'granTotal', 'propinaHabilitada', 'propinaPct'));
+    }
 }
