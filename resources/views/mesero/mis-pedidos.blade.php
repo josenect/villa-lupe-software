@@ -364,17 +364,13 @@
         otros: [{{ $pedidosListosOtros->pluck('id')->implode(',') }}]
     };
 
-    // Audio
+    // ── Audio (requiere primera interacción del usuario) ─────────────────────
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioContext = null;
 
     function inicializarAudio() {
-        if (!audioContext) {
-            audioContext = new AudioContext();
-        }
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
+        if (!audioContext) { audioContext = new AudioContext(); }
+        if (audioContext.state === 'suspended') { audioContext.resume(); }
     }
 
     function reproducirSonido() {
@@ -395,6 +391,15 @@
             });
         } catch (e) {}
     }
+
+    // ── Vibración (sin interacción previa — funciona en Android Chrome) ───────
+    function vibrar() {
+        if ('vibrate' in navigator) {
+            navigator.vibrate([300, 100, 300, 100, 300]);
+        }
+    }
+
+    // Notificaciones del sistema manejadas por el script global del layout
 
     function iniciarAutoRefresh() {
         refreshInterval = setInterval(cargarPedidos, REFRESH_TIME);
@@ -419,8 +424,9 @@
         const nuevosListosOtros = data.otros.listos.map(p => p.id).filter(id => !pedidosListosAnteriores.otros.includes(id));
         
         if (nuevosListosCocina.length > 0 || nuevosListosOtros.length > 0) {
-            reproducirSonido();
             const total = nuevosListosCocina.length + nuevosListosOtros.length;
+            reproducirSonido(); // audio en-página (si el usuario ya interactuó)
+            vibrar();           // vibración en-página
             mostrarNotificacion('success', `¡${total} pedido(s) listo(s)!`);
         }
         
@@ -682,7 +688,17 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         iniciarAutoRefresh();
-        document.body.addEventListener('click', () => inicializarAudio(), { once: true });
+        // Inicializar audio con CUALQUIER interacción
+        ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(function(evt) {
+            document.addEventListener(evt, function() { inicializarAudio(); });
+        });
+    });
+
+    // Al volver a la pestaña: reanudar audio suspendido
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
     });
 </script>
 <style>

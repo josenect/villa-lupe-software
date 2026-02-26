@@ -873,6 +873,22 @@
             border-color: rgba(200,210,240,0.3);
             color: #dde3f0;
         }
+        /* Botón campana de alertas */
+        #btnAlertasGlobal {
+            background: none;
+            border: 1.5px solid rgba(44,62,80,0.3);
+            border-radius: 20px;
+            padding: 0.35rem 0.7rem;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 1rem;
+            transition: var(--transition);
+            line-height: 1;
+        }
+        #btnAlertasGlobal:hover { background: rgba(52,152,219,0.1); }
+        #btnAlertasGlobal.activo { border-color: #27ae60; color: #27ae60; }
+        body.dark-mode #btnAlertasGlobal { border-color: rgba(200,210,240,0.3); color: #dde3f0; }
+        body.dark-mode #btnAlertasGlobal.activo { border-color: #27ae60; color: #27ae60; }
     </style>
 
     @yield('styles')
@@ -1012,6 +1028,15 @@
                             </li>
                         @endif
                         
+                        @if(auth()->user()->esMesero() || auth()->user()->esAdmin() || auth()->user()->esCocina())
+                        <!-- Campana de alertas -->
+                        <li class="nav-item d-flex align-items-center mx-1">
+                            <button id="btnAlertasGlobal" title="Activar alertas de pedidos" onclick="solicitarAlertas()">
+                                <i class="bi bi-bell" id="iconoAlertasGlobal"></i>
+                            </button>
+                        </li>
+                        @endif
+
                         <!-- Dark mode toggle -->
                         <li class="nav-item d-flex align-items-center mx-1">
                             <button id="darkModeToggle" title="Modo oscuro">
@@ -1102,6 +1127,128 @@
         });
     })();
     </script>
+
+    @auth
+    @if(auth()->user()->esMesero() || auth()->user()->esAdmin() || auth()->user()->esCocina())
+    <script>
+    (function() {
+        var USER_ID   = {{ auth()->id() }};
+        var USER_ROL  = '{{ auth()->user()->rol }}';
+        var INTERVAL  = 15000;
+        var IDS_KEY   = 'vl_nids_' + USER_ID;   // IDs ya notificados (localStorage)
+        var OFF_KEY   = 'vl_alrt_off';           // usuario silenció manualmente
+
+        function getIds()     { try { return JSON.parse(localStorage.getItem(IDS_KEY) || '[]'); } catch(e) { return []; } }
+        function saveIds(ids) { if (ids.length > 300) ids = ids.slice(-300); try { localStorage.setItem(IDS_KEY, JSON.stringify(ids)); } catch(e) {} }
+        function isMuted()    { return localStorage.getItem(OFF_KEY) === '1'; }
+
+        // ── Vibración (sin permiso previo) ────────────────────────────────────
+        function vibrar() {
+            if ('vibrate' in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
+        }
+
+        // ── Toast visual (funciona en todas las páginas) ──────────────────────
+        function mostrarToast(mensaje) {
+            if (isMuted()) return;
+            var t = document.createElement('div');
+            t.style.cssText = 'position:fixed;top:72px;right:16px;z-index:99999;background:#27ae60;color:#fff;padding:0.65rem 1.1rem;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);font-size:0.9rem;font-weight:600;display:flex;align-items:center;gap:8px;max-width:300px;transition:opacity .3s;';
+            t.innerHTML = '<i class="bi bi-bell-fill"></i><span>' + mensaje + '</span>';
+            document.body.appendChild(t);
+            setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 4000);
+        }
+
+        // ── Notificación del sistema ──────────────────────────────────────────
+        function notificar(titulo, cuerpo) {
+            if (isMuted()) return;
+            mostrarToast(cuerpo);
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            try { new Notification(titulo, { body: cuerpo, icon: '/favicon.ico', tag: 'vl-alert', renotify: true }); } catch(e) {}
+        }
+
+        // ── Solicitar permiso (requiere clic — obligatorio en todos los navegadores) ─
+        window.solicitarAlertas = function() {
+            if (!('Notification' in window)) { alert('Tu navegador no admite notificaciones.'); return; }
+            if (Notification.permission === 'granted') {
+                // Si ya tiene permiso, toggle silencio
+                var off = localStorage.getItem(OFF_KEY) === '1';
+                off ? localStorage.removeItem(OFF_KEY) : localStorage.setItem(OFF_KEY, '1');
+                actualizarBoton();
+                return;
+            }
+            Notification.requestPermission().then(function(p) {
+                if (p === 'granted') {
+                    localStorage.removeItem(OFF_KEY);
+                    actualizarBoton();
+                    new Notification('✅ Alertas activadas', { body: 'Recibirás notificaciones de pedidos.', icon: '/favicon.ico' });
+                } else {
+                    alert('Permiso denegado. Habilita las notificaciones desde la configuración del navegador.');
+                }
+            });
+        };
+
+        function actualizarBoton() {
+            var btn = document.getElementById('btnAlertasGlobal');
+            var ico = document.getElementById('iconoAlertasGlobal');
+            if (!btn || !ico) return;
+            var activo = ('Notification' in window) && Notification.permission === 'granted' && !isMuted();
+            btn.classList.toggle('activo', activo);
+            ico.className = activo ? 'bi bi-bell-fill' : 'bi bi-bell';
+            btn.title = activo ? 'Alertas activas — clic para silenciar' : 'Activar alertas de pedidos';
+        }
+
+        // ── Poll mesero/admin: pedidos listos ─────────────────────────────────
+        function pollMesero() {
+            fetch('/mesero/pedidos/ajax', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.cocina || !data.otros) return;
+                var listos = (data.cocina.listos || []).concat(data.otros.listos || []);
+                var ids = listos.map(function(p) { return p.id; });
+                var notificados = getIds();
+                var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
+                if (nuevos.length > 0) {
+                    vibrar();
+                    notificar('🍽️ Villa Lupe — Pedido listo', nuevos.length === 1 ? '1 pedido listo para entregar' : nuevos.length + ' pedidos listos para entregar');
+                    saveIds(notificados.concat(nuevos));
+                }
+            }).catch(function() {});
+        }
+
+        // ── Poll cocina/admin: nuevos pedidos pendientes ──────────────────────
+        function pollCocina() {
+            fetch('/cocina/pedidos', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.pedidos) return;
+                var ids = data.pedidos.map(function(p) { return p.id; });
+                var notificados = getIds();
+                var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
+                if (nuevos.length > 0) {
+                    vibrar();
+                    notificar('🔔 Cocina — Nuevo pedido', nuevos.length + ' pedido(s) nuevo(s) por preparar');
+                    saveIds(notificados.concat(nuevos));
+                }
+            }).catch(function() {});
+        }
+
+        // ── Arranque ──────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarBoton();
+            if (USER_ROL === 'mesero' || USER_ROL === 'admin') setInterval(pollMesero, INTERVAL);
+            if (USER_ROL === 'cocina' || USER_ROL === 'admin') setInterval(pollCocina, INTERVAL);
+        });
+
+        // Al volver a la pestaña: poll inmediato
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                if (USER_ROL === 'mesero' || USER_ROL === 'admin') pollMesero();
+                if (USER_ROL === 'cocina' || USER_ROL === 'admin') pollCocina();
+            }
+        });
+    })();
+    </script>
+    @endif
+    @endauth
 
     @yield('scripts')
 </body>

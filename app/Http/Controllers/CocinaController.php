@@ -37,6 +37,7 @@ class CocinaController extends Controller
             'pedidos' => $pedidos->map(function ($pedido) {
                 return [
                     'id' => $pedido->id,
+                    'table_id' => $pedido->table_id,
                     'amount' => $pedido->amount,
                     'estado' => $pedido->estado,
                     'observacion' => $pedido->observacion,

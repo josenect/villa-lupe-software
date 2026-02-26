@@ -127,76 +127,71 @@
     </div>
 @endif
 
-<!-- Info de la Mesa -->
-<div class="row g-4 mb-4 fade-in">
-    <div class="col-md-8">
-        <div class="card-custom h-100">
-            <div class="card-header-custom d-flex justify-content-between align-items-center">
-                <h2 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Mesa</h2>
-                <div class="d-flex align-items-center gap-2">
-                    @if($mesa->occupied_at && $productosTable->count() > 0)
-                        <span class="badge bg-dark bg-opacity-50 d-flex align-items-center gap-1" style="font-size:0.85rem; padding:6px 10px; border-radius:20px;">
-                            <i class="bi bi-clock-history"></i>
-                            <span id="tiempo-en-mesa" data-since="{{ $mesa->occupied_at->toIso8601String() }}">—</span>
-                        </span>
-                    @endif
-                    <span class="status-badge {{ $mesa->status == 'Ocupada' ? 'ocupada' : 'disponible' }}" style="font-size: 1rem;">
-                        {{ $mesa->status }}
-                    </span>
-                </div>
-            </div>
-            <div class="card-body-custom">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p class="mb-2"><strong><i class="bi bi-tag text-primary"></i> Nombre:</strong> {{ $mesa->name }}</p>
-                        <p class="mb-0"><strong><i class="bi bi-geo-alt text-primary"></i> Ubicación:</strong> {{ $mesa->location }}</p>
-                    </div>
-                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                        <div class="action-buttons action-buttons-mesa justify-content-md-end">
-                            @if($productosTable->count() > 0)
-                                <a target="_blank" href="/visual-pdf-pre/{{ $mesa->id }}" class="btn-warning-custom">
-                                    <i class="bi bi-printer"></i> Preliminar
-                                </a>
-                                <a target="_blank" href="/comanda/{{ $mesa->id }}" class="btn-primary-custom">
-                                    <i class="bi bi-journal-text"></i> Comanda
-                                </a>
-                                @if(auth()->user() && auth()->user()->esAdmin())
-                                    <a href="/mesa/{{ $mesa->id }}/cobro-separado" class="btn-warning-custom">
-                                        <i class="bi bi-people"></i> Cobrar separado
-                                    </a>
-                                    <a href="#" id="generar-factura-btn" data-mesa-id="{{ $mesa->id }}" class="btn-success-custom">
-                                        <i class="bi bi-receipt"></i> Facturar todo
-                                    </a>
-                                @endif
-                            @else
-                                @if(auth()->user() && auth()->user()->esAdmin())
-                                    <a target="_blank" href="/generar-factura/{{ $mesa->id }}" class="btn-primary-custom">
-                                        <i class="bi bi-eye"></i> Ver Última
-                                    </a>
-                                @endif
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
+@php
+    $cardPropinaHabilitada = \App\Models\Setting::get('propina_habilitada', '1') === '1';
+    $cardPropinaPct        = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
+    $cardPropinaValor      = $cardPropinaHabilitada ? (int)(floor($total * $cardPropinaPct / 100 / 1000) * 1000) : 0;
+@endphp
+
+<!-- Info de la Mesa (colapsable en mobile) -->
+<div class="card-custom mb-4 fade-in">
+    <div class="card-header-custom d-flex justify-content-between align-items-center"
+         id="info-mesa-toggle" role="button" style="cursor:pointer; user-select:none;"
+         onclick="toggleInfoMesa()">
+        <h2 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Mesa</h2>
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            @if($mesa->occupied_at && $productosTable->count() > 0)
+                <span class="badge bg-dark bg-opacity-50 d-flex align-items-center gap-1" style="font-size:0.85rem; padding:6px 10px; border-radius:20px;">
+                    <i class="bi bi-clock-history"></i>
+                    <span id="tiempo-en-mesa" data-since="{{ $mesa->occupied_at->toIso8601String() }}">—</span>
+                </span>
+            @endif
+            <span class="status-badge {{ $mesa->status == 'Ocupada' ? 'ocupada' : 'disponible' }}" style="font-size: 1rem;">
+                {{ $mesa->status }}
+            </span>
+            <i class="bi bi-chevron-down" id="info-mesa-chevron" style="font-size:1.1rem; transition:transform 0.25s; flex-shrink:0;"></i>
         </div>
     </div>
-    
-    <div class="col-md-4">
-        <div class="card-custom h-100">
-            <div class="card-body-custom text-center d-flex flex-column justify-content-center">
-                @php
-                    $cardPropinaHabilitada = \App\Models\Setting::get('propina_habilitada', '1') === '1';
-                    $cardPropinaPct        = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
-                    $cardPropinaValor      = $cardPropinaHabilitada ? (int)(floor($total * $cardPropinaPct / 100 / 1000) * 1000) : 0;
-                @endphp
-                <h5 class="text-muted mb-3">Total Actual</h5>
-                <h2 class="text-primary mb-2" style="font-size: 2.5rem;">$ {{ number_format($total, 0, ',', '.') }}</h2>
-                @if($cardPropinaHabilitada)
-                <p class="text-muted mb-0">
-                    <small>Propina sugerida ({{ $cardPropinaPct }}%): <strong>$ {{ number_format($cardPropinaValor, 0, ',', '.') }}</strong></small>
-                </p>
-                @endif
+    <div id="info-mesa-body">
+        <div class="card-body-custom">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <p class="mb-2"><strong><i class="bi bi-tag text-primary"></i> Nombre:</strong> {{ $mesa->name }}</p>
+                    <p class="mb-3"><strong><i class="bi bi-geo-alt text-primary"></i> Ubicación:</strong> {{ $mesa->location }}</p>
+                    <div class="action-buttons action-buttons-mesa">
+                        @if($productosTable->count() > 0)
+                            <a target="_blank" href="/visual-pdf-pre/{{ $mesa->id }}" class="btn-warning-custom">
+                                <i class="bi bi-printer"></i> Preliminar
+                            </a>
+                            <a target="_blank" href="/comanda/{{ $mesa->id }}" class="btn-primary-custom">
+                                <i class="bi bi-journal-text"></i> Comanda
+                            </a>
+                            @if(auth()->user() && auth()->user()->esAdmin())
+                                <a href="/mesa/{{ $mesa->id }}/cobro-separado" class="btn-warning-custom">
+                                    <i class="bi bi-people"></i> Cobrar separado
+                                </a>
+                                <a href="#" id="generar-factura-btn" data-mesa-id="{{ $mesa->id }}" class="btn-success-custom">
+                                    <i class="bi bi-receipt"></i> Facturar todo
+                                </a>
+                            @endif
+                        @else
+                            @if(auth()->user() && auth()->user()->esAdmin())
+                                <a target="_blank" href="/generar-factura/{{ $mesa->id }}" class="btn-primary-custom">
+                                    <i class="bi bi-eye"></i> Ver Última
+                                </a>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <h5 class="text-muted mb-1">Total Actual</h5>
+                    <h2 class="text-primary mb-1" style="font-size: 2rem;">$ {{ number_format($total, 0, ',', '.') }}</h2>
+                    @if($cardPropinaHabilitada)
+                    <p class="text-muted mb-0">
+                        <small>Propina sugerida ({{ $cardPropinaPct }}%): <strong>$ {{ number_format($cardPropinaValor, 0, ',', '.') }}</strong></small>
+                    </p>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -792,6 +787,24 @@
         document.getElementById('sinResultadosProductosMesa').style.display =
             (visibles === 0 && q !== '') ? '' : 'none';
     });
+
+    // ── Info mesa colapsable en mobile ────────────────────────────────────────
+    function toggleInfoMesa() {
+        var body    = document.getElementById('info-mesa-body');
+        var chevron = document.getElementById('info-mesa-chevron');
+        var hidden  = body.style.display === 'none';
+        body.style.display       = hidden ? '' : 'none';
+        chevron.style.transform  = hidden ? '' : 'rotate(-90deg)';
+    }
+    // En mobile arranca colapsado
+    (function() {
+        if (window.innerWidth < 768) {
+            var body    = document.getElementById('info-mesa-body');
+            var chevron = document.getElementById('info-mesa-chevron');
+            if (body)    body.style.display      = 'none';
+            if (chevron) chevron.style.transform  = 'rotate(-90deg)';
+        }
+    })();
 
     // Modal de cancelación
     document.querySelectorAll('.btn-cancelar').forEach(function(btn) {

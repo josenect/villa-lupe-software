@@ -31,6 +31,19 @@
     .pago-box.efectivo    { border: 2px solid #27ae60; }
     .pago-box.transferencia { border: 2px solid #3498db; }
     .de-total { color: #999; font-size: 0.8rem; }
+
+    /* Sobreescribe max-width: 60px que el layout global aplica en móvil */
+    .btn-cobro-page {
+        max-width: none !important;
+        flex: 0 0 auto !important;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 575px) {
+        .page-title { font-size: 0.9rem !important; }
+        .card-header-custom { flex-wrap: wrap; gap: 6px; }
+        .card-header-custom h2 { font-size: 0.85rem; }
+    }
 </style>
 @endsection
 
@@ -40,14 +53,13 @@
     $propinaPct        = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
 @endphp
 
-<div class="d-flex justify-content-between align-items-center mb-3 fade-in">
-    <div>
-        <a href="/mesa/{{ $mesa->id }}" class="btn-secondary-custom btn-sm-custom">
-            <i class="bi bi-arrow-left"></i> Volver
-        </a>
-    </div>
-    <h1 class="mb-0 fs-4"><i class="bi bi-people text-warning"></i> Cobro Separado — {{ $mesa->name }}</h1>
-    <div style="width:80px;"></div>
+<div class="d-flex align-items-center gap-2 mb-3 fade-in">
+    <a href="/mesa/{{ $mesa->id }}" class="btn-secondary-custom btn-sm-custom btn-cobro-page">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <h1 class="mb-0 page-title flex-grow-1 text-center" style="font-size: clamp(0.8rem, 3.5vw, 1.3rem);">
+        <i class="bi bi-people text-warning"></i> Cobro Separado — {{ $mesa->name }}
+    </h1>
 </div>
 
 @if($productosTable->isEmpty())
@@ -63,10 +75,10 @@
     <div class="col-lg-8">
         <div class="card-custom">
             <div class="card-header-custom d-flex justify-content-between align-items-center">
-                <h2 class="mb-0"><i class="bi bi-list-check"></i> Indica cuánto paga esta cuenta</h2>
-                <div class="d-flex gap-2">
-                    <button type="button" id="btn-todos" class="btn-primary-custom btn-sm-custom">Todos</button>
-                    <button type="button" id="btn-ninguno" class="btn-secondary-custom btn-sm-custom">Ninguno</button>
+                <h2 class="mb-0"><i class="bi bi-list-check"></i> <span class="d-none d-sm-inline">Indica cuánto paga </span>Esta cuenta</h2>
+                <div class="d-flex gap-2" style="flex-shrink:0;">
+                    <button type="button" id="btn-todos" class="btn-primary-custom btn-sm-custom btn-cobro-page">Todos</button>
+                    <button type="button" id="btn-ninguno" class="btn-secondary-custom btn-sm-custom btn-cobro-page">Ninguno</button>
                 </div>
             </div>
             <div class="card-body-custom p-0">

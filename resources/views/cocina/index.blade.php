@@ -107,6 +107,23 @@
         box-shadow: 0 0 20px rgba(243, 156, 18, 0.6) !important;
     }
     
+    .mesa-grupo-header {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #dee2e6;
+        transition: background 0.15s;
+    }
+    .mesa-grupo-header:hover { background: #e9ecef; }
+    .mesa-grupo-body {
+        border: 2px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        overflow: hidden;
+    }
+    .mesa-grupo-body .pedido-item:last-child { border-bottom: none !important; }
+    .pedido-item { background: white; }
+
     /* Responsive para cocina */
     @media (max-width: 768px) {
         .contador-pedidos {
@@ -191,14 +208,8 @@
     </div>
 </div>
 
-<!-- Banner para habilitar sonido -->
-<div id="banner-sonido" class="alert-custom alert-info-custom fade-in" style="display: none;">
-    <i class="bi bi-volume-up-fill fs-5"></i>
-    <span>Haz clic en el botón de sonido <i class="bi bi-volume-up-fill"></i> para habilitar las alertas de nuevos pedidos</span>
-    <button type="button" class="btn btn-sm btn-outline-primary ms-3" onclick="habilitarSonido()">
-        <i class="bi bi-volume-up-fill"></i> Habilitar Sonido
-    </button>
-</div>
+<!-- El audio se activa automáticamente con cualquier interacción -->
+<div id="banner-sonido" style="display:none;"></div>
 
 @if(session('success'))
     <div class="alert-custom alert-success-custom fade-in">
@@ -247,51 +258,52 @@
     </div>
 </div>
 
-<!-- Pedidos Pendientes -->
+<!-- Pedidos por Mesa -->
 <div class="card-custom mb-4 fade-in">
     <div class="card-header-custom" style="background: linear-gradient(135deg, #e67e22, #d35400) !important;">
-        <h2><i class="bi bi-list-task"></i> Pedidos por Preparar (<span id="pedidos-count">{{ $pedidos->count() }}</span>)</h2>
+        <h2><i class="bi bi-list-task"></i> Mesas con Pedidos (<span id="pedidos-count">{{ $pedidos->count() }}</span> items)</h2>
     </div>
     <div class="card-body-custom" id="pedidos-pendientes-container">
         @if($pedidos->count() > 0)
-            <div class="row">
-                @foreach ($pedidos as $pedido)
-                    <div class="col-md-6 col-lg-4" id="pedido-{{ $pedido->id }}">
-                        <div class="pedido-card {{ $pedido->estado === 'en_cocina' ? 'en-cocina' : '' }}">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <span class="mesa-badge badge bg-primary">
-                                        <i class="bi bi-table"></i> {{ $pedido->mesa->name ?? 'Mesa' }}
-                                    </span>
-                                    <span class="badge bg-secondary ms-1">
-                                        <i class="bi bi-person"></i> {{ $pedido->usuario->name ?? 'N/A' }}
-                                    </span>
-                                </div>
-                                <span class="badge {{ $pedido->estado === 'en_cocina' ? 'bg-danger' : 'bg-warning text-dark' }}">
-                                    {{ $pedido->estado === 'en_cocina' ? 'En Cocina' : 'Pendiente' }}
-                                </span>
-                            </div>
-                            
-                            <h4 class="mb-1">
-                                <span class="badge bg-secondary me-1">{{ $pedido->amount }}x</span>
-                                {{ $pedido->producto->name }}
-                                <small class="text-muted">${{ number_format($pedido->producto->price, 0, ',', '.') }}</small>
-                            </h4>
-                            
-                            @if($pedido->observacion)
-                                <div class="observacion-text">
-                                    <i class="bi bi-chat-dots"></i> {{ $pedido->observacion }}
-                                </div>
+            @foreach ($pedidos->groupBy('table_id') as $mesaId => $itemsMesa)
+                @php
+                    $pendientes = $itemsMesa->where('estado', 'pendiente')->count();
+                    $enCocina   = $itemsMesa->where('estado', 'en_cocina')->count();
+                    $mesaNombre = $itemsMesa->first()->mesa->name ?? 'Mesa';
+                @endphp
+                <div class="mesa-grupo mb-3" id="mesa-grupo-{{ $mesaId }}">
+                    <div class="mesa-grupo-header d-flex justify-content-between align-items-center"
+                         onclick="toggleMesaGrupo({{ $mesaId }})" style="cursor:pointer; user-select:none;">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary" style="font-size:1rem;"><i class="bi bi-table"></i> {{ $mesaNombre }}</span>
+                            @if($pendientes > 0)
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> {{ $pendientes }} pendiente{{ $pendientes > 1 ? 's' : '' }}</span>
                             @endif
-                            
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <small class="text-muted">
-                                    <i class="bi bi-clock"></i> {{ date('H:i', strtotime($pedido->record)) }}
-                                </small>
-                                <div class="d-flex gap-2">
+                            @if($enCocina > 0)
+                                <span class="badge bg-danger"><i class="bi bi-fire"></i> {{ $enCocina }} en cocina</span>
+                            @endif
+                        </div>
+                        <i class="bi bi-chevron-down" id="chevron-{{ $mesaId }}" style="font-size:1.1rem; transition:transform 0.2s; flex-shrink:0;"></i>
+                    </div>
+                    <div class="mesa-grupo-body" id="body-{{ $mesaId }}" style="display:none;">
+                        @foreach ($itemsMesa as $pedido)
+                            <div class="pedido-item d-flex justify-content-between align-items-center py-2 px-3 border-bottom" id="pedido-{{ $pedido->id }}">
+                                <div>
+                                    <span class="fw-bold">{{ $pedido->amount }}x {{ $pedido->producto->name }}</span>
+                                    @if($pedido->observacion)
+                                        <div class="observacion-text mt-1"><i class="bi bi-chat-dots"></i> {{ $pedido->observacion }}</div>
+                                    @endif
+                                    <div class="mt-1">
+                                        <small class="text-muted"><i class="bi bi-clock"></i> {{ date('H:i', strtotime($pedido->record)) }}</small>
+                                        <span class="badge {{ $pedido->estado === 'en_cocina' ? 'bg-danger' : 'bg-warning text-dark' }} ms-1">
+                                            {{ $pedido->estado === 'en_cocina' ? 'En Cocina' : 'Pendiente' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0 ms-2">
                                     @if($pedido->estado === 'pendiente')
                                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="marcarEnCocina({{ $pedido->id }})">
-                                            <i class="bi bi-fire"></i> En Cocina
+                                            <i class="bi bi-fire"></i>
                                         </button>
                                     @endif
                                     <button type="button" class="btn-listo" onclick="marcarListo({{ $pedido->id }})">
@@ -299,10 +311,10 @@
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        @endforeach
                     </div>
-                @endforeach
-            </div>
+                </div>
+            @endforeach
         @else
             <div class="text-center py-5">
                 <i class="bi bi-emoji-smile text-success" style="font-size: 4rem;"></i>
@@ -545,94 +557,109 @@
         document.getElementById('contador-entregados').textContent = contadores.entregados;
     }
 
-    // Generar HTML de un pedido pendiente
-    function generarPedidoHTML(pedido) {
-        const esEnCocina = pedido.estado === 'en_cocina';
-        const badgeClass = esEnCocina ? 'bg-danger' : 'bg-warning text-dark';
-        const estadoTexto = esEnCocina ? 'En Cocina' : 'Pendiente';
-        const cardClass = esEnCocina ? 'pedido-card en-cocina' : 'pedido-card';
-        
-        let botonesHTML = '';
-        if (pedido.estado === 'pendiente') {
-            botonesHTML = `
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="marcarEnCocina(${pedido.id})">
-                    <i class="bi bi-fire"></i> En Cocina
-                </button>
-            `;
-        }
-        
-        let observacionHTML = '';
-        if (pedido.observacion) {
-            observacionHTML = `
-                <div class="observacion-text">
-                    <i class="bi bi-chat-dots"></i> ${pedido.observacion}
-                </div>
-            `;
-        }
+    // Toggle grupo de mesa
+    function toggleMesaGrupo(mesaId) {
+        var body    = document.getElementById('body-' + mesaId);
+        var chevron = document.getElementById('chevron-' + mesaId);
+        if (!body) return;
+        var hidden = body.style.display === 'none';
+        body.style.display      = hidden ? '' : 'none';
+        chevron.style.transform = hidden ? 'rotate(-180deg)' : '';
+    }
+
+    // Generar HTML de un item de pedido dentro de una mesa
+    function generarItemHTML(pedido) {
+        const badgeClass  = pedido.estado === 'en_cocina' ? 'bg-danger' : 'bg-warning text-dark';
+        const estadoTexto = pedido.estado === 'en_cocina' ? 'En Cocina' : 'Pendiente';
+        const btnEnCocina = pedido.estado === 'pendiente'
+            ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="marcarEnCocina(${pedido.id})"><i class="bi bi-fire"></i></button>`
+            : '';
+        const obsHTML = pedido.observacion
+            ? `<div class="observacion-text mt-1"><i class="bi bi-chat-dots"></i> ${pedido.observacion}</div>`
+            : '';
 
         return `
-            <div class="col-md-6 col-lg-4" id="pedido-${pedido.id}">
-                <div class="${cardClass}">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <span class="mesa-badge badge bg-primary">
-                                <i class="bi bi-table"></i> ${pedido.mesa_nombre}
-                            </span>
-                            <span class="badge bg-secondary ms-1">
-                                <i class="bi bi-person"></i> ${pedido.mesero_nombre}
-                            </span>
-                        </div>
-                        <span class="badge ${badgeClass}">
-                            ${estadoTexto}
-                        </span>
+            <div class="pedido-item d-flex justify-content-between align-items-center py-2 px-3 border-bottom" id="pedido-${pedido.id}">
+                <div>
+                    <span class="fw-bold">${pedido.amount}x ${pedido.producto_nombre}</span>
+                    ${obsHTML}
+                    <div class="mt-1">
+                        <small class="text-muted"><i class="bi bi-clock"></i> ${pedido.record}</small>
+                        <span class="badge ${badgeClass} ms-1">${estadoTexto}</span>
                     </div>
-                    
-                    <h4 class="mb-1">
-                        <span class="badge bg-secondary me-1">${pedido.amount}x</span>
-                        ${pedido.producto_nombre}
-                        <small class="text-muted">$${pedido.producto_precio}</small>
-                    </h4>
-                    
-                    ${observacionHTML}
-                    
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <small class="text-muted">
-                            <i class="bi bi-clock"></i> ${pedido.record}
-                        </small>
-                        <div class="d-flex gap-2">
-                            ${botonesHTML}
-                            <button type="button" class="btn-listo" onclick="marcarListo(${pedido.id})">
-                                <i class="bi bi-check-lg"></i> Listo
-                            </button>
-                        </div>
-                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0 ms-2">
+                    ${btnEnCocina}
+                    <button type="button" class="btn-listo" onclick="marcarListo(${pedido.id})">
+                        <i class="bi bi-check-lg"></i> Listo
+                    </button>
                 </div>
             </div>
         `;
     }
 
-    // Actualizar lista de pedidos pendientes
+    // Actualizar lista agrupada por mesa
     function actualizarPedidosPendientes(pedidos) {
-        const container = document.getElementById('pedidos-pendientes-container');
+        const container  = document.getElementById('pedidos-pendientes-container');
         const headerCount = document.getElementById('pedidos-count');
-        
-        if (pedidos.length > 0) {
-            let html = '<div class="row">';
-            pedidos.forEach(pedido => {
-                html += generarPedidoHTML(pedido);
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        } else {
+
+        if (pedidos.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-5">
                     <i class="bi bi-emoji-smile text-success" style="font-size: 4rem;"></i>
                     <h3 class="text-success mt-3">¡Todo al día!</h3>
                     <p class="text-muted">No hay pedidos pendientes</p>
-                </div>
-            `;
+                </div>`;
+            headerCount.textContent = 0;
+            return;
         }
-        
+
+        // Agrupar por table_id
+        const mesas = {};
+        pedidos.forEach(p => {
+            if (!mesas[p.table_id]) mesas[p.table_id] = { nombre: p.mesa_nombre, items: [] };
+            mesas[p.table_id].items.push(p);
+        });
+
+        // Recordar qué mesas estaban abiertas antes del refresh
+        const abiertos = {};
+        Object.keys(mesas).forEach(tid => {
+            const b = document.getElementById('body-' + tid);
+            if (b) abiertos[tid] = b.style.display !== 'none';
+        });
+
+        let html = '';
+        Object.entries(mesas).forEach(([tid, grupo]) => {
+            const pendientes = grupo.items.filter(i => i.estado === 'pendiente').length;
+            const enCocina   = grupo.items.filter(i => i.estado === 'en_cocina').length;
+            const estaAbierto = abiertos[tid] ?? false;
+            const chevronRot  = estaAbierto ? 'rotate(-180deg)' : '';
+            const bodyDisplay = estaAbierto ? '' : 'none';
+
+            const badgesPend = pendientes > 0
+                ? `<span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> ${pendientes} pendiente${pendientes > 1 ? 's' : ''}</span>` : '';
+            const badgesCoc = enCocina > 0
+                ? `<span class="badge bg-danger"><i class="bi bi-fire"></i> ${enCocina} en cocina</span>` : '';
+
+            let itemsHTML = grupo.items.map(p => generarItemHTML(p)).join('');
+
+            html += `
+                <div class="mesa-grupo mb-3" id="mesa-grupo-${tid}">
+                    <div class="mesa-grupo-header d-flex justify-content-between align-items-center"
+                         onclick="toggleMesaGrupo(${tid})" style="cursor:pointer; user-select:none;">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary" style="font-size:1rem;"><i class="bi bi-table"></i> ${grupo.nombre}</span>
+                            ${badgesPend}${badgesCoc}
+                        </div>
+                        <i class="bi bi-chevron-down" id="chevron-${tid}" style="font-size:1.1rem; transition:transform 0.2s; flex-shrink:0; transform:${chevronRot};"></i>
+                    </div>
+                    <div class="mesa-grupo-body" id="body-${tid}" style="display:${bodyDisplay};">
+                        ${itemsHTML}
+                    </div>
+                </div>`;
+        });
+
+        container.innerHTML = html;
         headerCount.textContent = pedidos.length;
     }
 
@@ -905,31 +932,24 @@
             sonidoHabilitado = false;
         }
         actualizarBotonSonido();
-        
-        // Mostrar banner si el audio no está inicializado
-        if (!audioContext && sonidoHabilitado) {
-            document.getElementById('banner-sonido').style.display = 'flex';
-        }
-        
-        // Iniciar auto-refresh
         iniciarAutoRefresh();
-        console.log('Cocina AJAX iniciado - actualización cada ' + (REFRESH_TIME/1000) + ' segundos');
-        
-        // Inicializar audio con cualquier clic en la página
-        document.body.addEventListener('click', function() {
-            if (!audioContext) {
+
+        // Inicializar audio con CUALQUIER interacción — no requiere botón específico
+        // Se llama cada vez para reanudar si el contexto fue suspendido
+        ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(function(evt) {
+            document.addEventListener(evt, function() {
                 inicializarAudio();
-                document.getElementById('banner-sonido').style.display = 'none';
-            }
-        }, { once: false });
+            });
+        });
     });
 
-    // Detectar cuando la pestaña vuelve a estar visible
+    // Al volver a la pestaña: reanudar audio y recargar pedidos
     document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
-            // Al volver a la pestaña, cargar pedidos inmediatamente
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             cargarPedidos();
-            // Detener parpadeo del título
             if (parpadeoInterval) {
                 clearInterval(parpadeoInterval);
                 document.title = 'Cocina - Villa Lupe';
