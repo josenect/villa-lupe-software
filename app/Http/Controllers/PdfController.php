@@ -80,6 +80,36 @@ class PdfController extends Controller
         return view('pdf.detalle-mesa', compact('mesa', 'productosTable', 'subtotal','descuentoTotal', 'total'))->render();
     }
 
+    public function preliminarParcial($mesa_id, Request $request)
+    {
+        date_default_timezone_set('America/Bogota');
+        $mesa = Table::findOrFail($mesa_id);
+
+        $ids  = array_filter(array_map('intval', explode(',', $request->get('ids',  ''))));
+        $qtys = array_map('intval',               explode(',', $request->get('qtys', '')));
+
+        if (empty($ids)) {
+            abort(400, 'No se especificaron productos.');
+        }
+
+        // Emparejar ids → cantidades (si no vienen qtys, usar la cantidad original)
+        $items = [];
+        foreach (array_values($ids) as $i => $elementId) {
+            $el = ElementTable::with('producto')->find($elementId);
+            if (!$el || $el->table_id != $mesa_id) continue;
+            $qty = isset($qtys[$i]) && $qtys[$i] > 0 ? min($qtys[$i], $el->amount) : $el->amount;
+            $el->amount = $qty; // sobrescribir solo para la vista
+            $items[] = $el;
+        }
+
+        $productosTable = collect($items);
+        $subtotal       = $productosTable->sum(fn($e) => $e->price * $e->amount);
+        $descuentoTotal = $productosTable->sum(fn($e) => $e->dicount * $e->amount);
+        $total          = $subtotal - $descuentoTotal;
+
+        return view('pdf.detalle-parcial', compact('mesa', 'productosTable', 'subtotal', 'descuentoTotal', 'total'))->render();
+    }
+
     public function comanda($mesa_id)
     {
         date_default_timezone_set('America/Bogota');

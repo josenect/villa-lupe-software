@@ -99,6 +99,104 @@ class FacturaController extends Controller
         return redirect()->route('factura.visual',$numeroFactura);
     }
 
+    public function generarFacturaParcial($mesaId, Request $request)
+    {
+        date_default_timezone_set('America/Bogota');
+
+        $ids  = array_filter(array_map('intval', explode(',', $request->get('ids',  ''))));
+        $qtys = array_map('intval',               explode(',', $request->get('qtys', '')));
+
+        if (empty($ids)) {
+            return redirect()->route('mesa.cobro-separado', $mesaId)->with('error', 'No se especificaron productos.');
+        }
+
+        $propina            = $request->input('propina', 0);
+        $medioPago          = $request->input('medio_pago', 'Efectivo');
+        $valorEfectivo      = $request->input('efectivo', 0);
+        $valorTransferencia = $request->input('transferencia', 0);
+
+        $subtotal       = 0;
+        $descuentoTotal = 0;
+        $lineasFactura  = [];
+
+        foreach (array_values($ids) as $i => $elementId) {
+            $producto = ElementTable::find($elementId);
+            if (!$producto || $producto->table_id != $mesaId || $producto->status != 1) continue;
+
+            // Cantidad a facturar en esta cuenta
+            $qtySolicitada = isset($qtys[$i]) && $qtys[$i] > 0 ? $qtys[$i] : $producto->amount;
+            $qtyFacturar   = min($qtySolicitada, $producto->amount);
+
+            $subtotal       += $producto->price  * $qtyFacturar;
+            $descuentoTotal += $producto->dicount * $qtyFacturar;
+
+            $lineasFactura[] = [
+                'table_id'    => $producto->table_id,
+                'producto_id' => $producto->producto_id,
+                'price'       => $producto->price,
+                'amount'      => $qtyFacturar,
+                'discount'    => $producto->dicount,
+                'record'      => $producto->record,
+            ];
+
+            if ($qtyFacturar >= $producto->amount) {
+                // Facturar todo: marcar como cobrado
+                $producto->status = 0;
+                $producto->save();
+            } else {
+                // Facturar parcial: reducir la cantidad restante
+                $producto->amount -= $qtyFacturar;
+                $producto->save();
+            }
+        }
+
+        if (empty($lineasFactura)) {
+            return redirect()->route('mesa.cobro-separado', $mesaId)->with('error', 'No se encontraron productos válidos.');
+        }
+
+        $total = $subtotal - $descuentoTotal;
+
+        $numeroFactura = 'F' . str_pad(Factura::max('id') + 1, 3, '0', STR_PAD_LEFT);
+
+        $factura = new Factura;
+        $factura->numero_factura      = $numeroFactura;
+        $factura->valor_total         = $total;
+        $factura->table_id            = $mesaId;
+        $factura->user_id             = Auth::id();
+        $factura->valor_propina       = $propina;
+        $factura->valor_pagado        = $total + $propina;
+        $factura->valor_efectivo      = $valorEfectivo;
+        $factura->valor_transferencia = $valorTransferencia;
+        $factura->fecha_hora_factura  = now();
+        $factura->medio_pago          = $medioPago;
+        $factura->estado              = Factura::ESTADO_ACTIVA;
+        $factura->save();
+
+        foreach ($lineasFactura as $linea) {
+            $det = new DetalleFactura;
+            $det->table_id    = $linea['table_id'];
+            $det->factura_id  = $factura->id;
+            $det->producto_id = $linea['producto_id'];
+            $det->price       = $linea['price'];
+            $det->amount      = $linea['amount'];
+            $det->discount    = $linea['discount'];
+            $det->record      = $linea['record'];
+            $det->save();
+        }
+
+        // Liberar mesa solo si no quedan productos activos
+        $restantes = ElementTable::where('status', 1)
+            ->where('table_id', $mesaId)
+            ->whereNotIn('estado', [ElementTable::ESTADO_CANCELADO, ElementTable::ESTADO_CANCELACION_SOLICITADA])
+            ->count();
+
+        if ($restantes === 0) {
+            Table::where('id', $mesaId)->update(['occupied_at' => null]);
+        }
+
+        return redirect()->route('factura.visual', $numeroFactura);
+    }
+
     //visualizar factura
     public function visualFactura($factura)
     {

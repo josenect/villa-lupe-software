@@ -161,8 +161,11 @@
                                     <i class="bi bi-journal-text"></i> Comanda
                                 </a>
                                 @if(auth()->user() && auth()->user()->esAdmin())
+                                    <a href="/mesa/{{ $mesa->id }}/cobro-separado" class="btn-warning-custom">
+                                        <i class="bi bi-people"></i> Cobrar separado
+                                    </a>
                                     <a href="#" id="generar-factura-btn" data-mesa-id="{{ $mesa->id }}" class="btn-success-custom">
-                                        <i class="bi bi-receipt"></i> Facturar
+                                        <i class="bi bi-receipt"></i> Facturar todo
                                     </a>
                                 @endif
                             @else

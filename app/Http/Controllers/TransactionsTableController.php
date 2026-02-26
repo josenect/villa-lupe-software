@@ -302,6 +302,26 @@ class TransactionsTableController extends Controller
         return view('admin.pendientes', compact('mesas', 'totalGlobal', 'propinaGlobal', 'granTotal', 'propinaHabilitada', 'propinaPct'));
     }
 
+    public function cobroSeparado($id)
+    {
+        $mesa = Table::findOrFail($id);
+
+        $productosTable = ElementTable::with('producto')
+            ->where('status', 1)
+            ->where('table_id', $id)
+            ->whereNotIn('estado', [ElementTable::ESTADO_CANCELADO, ElementTable::ESTADO_CANCELACION_SOLICITADA])
+            ->get();
+
+        $propinaHabilitada = \App\Models\Setting::get('propina_habilitada', '1') === '1';
+        $propinaPct        = (int) \App\Models\Setting::get('propina_porcentaje', env('PROPINA', 10));
+
+        $subtotalMesa = $productosTable->sum(fn($e) => ($e->price - $e->dicount) * $e->amount);
+        $propinaMesa  = $propinaHabilitada ? (int)(floor($subtotalMesa * $propinaPct / 100 / 1000) * 1000) : 0;
+        $totalMesa    = $subtotalMesa + $propinaMesa;
+
+        return view('mesa.cobro-separado', compact('mesa', 'productosTable', 'totalMesa'));
+    }
+
     public function imprimirPendientes()
     {
         $propinaHabilitada = \App\Models\Setting::get('propina_habilitada', '1') === '1';

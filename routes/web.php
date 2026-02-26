@@ -64,6 +64,9 @@ Route::middleware(['role'])->group(function () {
             Route::post('{mesa_id}/productos/{id}/solicitar-cancelacion', [TransactionsTableController::class, 'solicitarCancelacion'])->name('solicitar.cancelacion');
         });
 
+        // Cobro separado por cuenta
+        Route::get('mesa/{id}/cobro-separado', [TransactionsTableController::class, 'cobroSeparado'])->name('mesa.cobro-separado');
+
         // Visualizar pre factura
         Route::get('visual-pdf-pre/{mesa_id}', [PdfController::class, 'visualPdf'])->name('pdf.visualPdf');
     });
@@ -77,6 +80,7 @@ Route::middleware(['role'])->group(function () {
         
         // Generar factura (solo admin)
         Route::get('/generar-factura/{mesaId}', [FacturaController::class, 'generarFactura']);
+        Route::get('/generar-factura-parcial/{mesaId}', [FacturaController::class, 'generarFacturaParcial'])->name('factura.generarParcial');
         
         // Gestionar mesas
         Route::prefix('admin/mesas')->group(function () {
@@ -175,3 +179,6 @@ Route::get('generar-pdf-pre/{mesa_id}', [PdfController::class, 'generarPdf'])->n
 
 // Comanda de cocina
 Route::get('comanda/{mesa_id}', [PdfController::class, 'comanda'])->name('pdf.comanda');
+
+// Preliminar parcial (cobro separado)
+Route::get('preliminar-parcial/{mesa_id}', [PdfController::class, 'preliminarParcial'])->name('pdf.preliminarParcial');
