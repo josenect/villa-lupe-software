@@ -157,6 +157,7 @@ Route::middleware(['role'])->group(function () {
     Route::middleware(['role:admin,cocina'])->group(function () {
         Route::get('/cocina', [CocinaController::class, 'index'])->name('cocina.index');
         Route::get('/cocina/pedidos', [CocinaController::class, 'getPedidosAjax'])->name('cocina.pedidos');
+        Route::get('/cocina/pedidos/ping', [CocinaController::class, 'ping'])->name('cocina.pedidos.ping');
         Route::post('/cocina/{id}/listo', [CocinaController::class, 'marcarListo'])->name('cocina.listo');
         Route::post('/cocina/{id}/en-cocina', [CocinaController::class, 'marcarEnCocina'])->name('cocina.enCocina');
     });
@@ -166,6 +167,7 @@ Route::middleware(['role'])->group(function () {
     Route::middleware(['role:admin,mesero'])->group(function () {
         Route::get('/mesero/pedidos', [MeseroPedidosController::class, 'index'])->name('mesero.pedidos');
         Route::get('/mesero/pedidos/ajax', [MeseroPedidosController::class, 'getPedidosAjax'])->name('mesero.pedidos.ajax');
+        Route::get('/mesero/pedidos/ping', [MeseroPedidosController::class, 'ping'])->name('mesero.pedidos.ping');
         Route::post('/mesero/pedidos/{id}/entregado', [MeseroPedidosController::class, 'marcarEntregado'])->name('mesero.pedido.entregado');
     });
 

@@ -66,6 +66,18 @@
             transition: var(--transition);
             margin: 0 0.2rem;
         }
+
+        /* Navbar compacto en xl (1200-1399px) para que no se solape con muchos ítems */
+        @media (min-width: 1200px) and (max-width: 1399px) {
+            .nav-link {
+                padding: 0.4rem 0.55rem !important;
+                font-size: 0.875rem;
+                margin: 0 0.05rem;
+            }
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
         
         .nav-link:hover, .nav-link.active {
             background-color: var(--secondary-color);
@@ -902,7 +914,7 @@
         $navRestNombre        = \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe');
         $navRestLogo          = \App\Models\Setting::get('restaurante_logo', '');
     @endphp
-    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <nav class="navbar navbar-expand-xl navbar-custom sticky-top">
         <div class="container">
             <a class="navbar-brand" href="@auth @if(auth()->user()->esCocina()) {{ route('cocina.index') }} @else / @endif @else / @endauth">
                 @if($navRestLogo)
@@ -1196,14 +1208,12 @@
             btn.title = activo ? 'Alertas activas — clic para silenciar' : 'Activar alertas de pedidos';
         }
 
-        // ── Poll mesero/admin: pedidos listos ─────────────────────────────────
+        // ── Poll mesero/admin: pedidos listos (solo IDs) ──────────────────────
         function pollMesero() {
-            fetch('/mesero/pedidos/ajax', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            fetch('/mesero/pedidos/ping', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (!data.cocina || !data.otros) return;
-                var listos = (data.cocina.listos || []).concat(data.otros.listos || []);
-                var ids = listos.map(function(p) { return p.id; });
+                var ids = data.ids || [];
                 var notificados = getIds();
                 var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
                 if (nuevos.length > 0) {
@@ -1214,13 +1224,12 @@
             }).catch(function() {});
         }
 
-        // ── Poll cocina/admin: nuevos pedidos pendientes ──────────────────────
+        // ── Poll cocina/admin: nuevos pedidos pendientes (solo IDs) ──────────
         function pollCocina() {
-            fetch('/cocina/pedidos', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            fetch('/cocina/pedidos/ping', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (!data.pedidos) return;
-                var ids = data.pedidos.map(function(p) { return p.id; });
+                var ids = data.ids || [];
                 var notificados = getIds();
                 var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
                 if (nuevos.length > 0) {
