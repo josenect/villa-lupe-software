@@ -107,7 +107,9 @@ class PdfController extends Controller
         $descuentoTotal = $productosTable->sum(fn($e) => $e->dicount * $e->amount);
         $total          = $subtotal - $descuentoTotal;
 
-        return view('pdf.detalle-parcial', compact('mesa', 'productosTable', 'subtotal', 'descuentoTotal', 'total'))->render();
+        $tipoBadge = $request->get('tipo') === 'pendientes' ? 'PENDIENTES POR COBRAR' : 'CUENTA PARCIAL';
+
+        return view('pdf.detalle-parcial', compact('mesa', 'productosTable', 'subtotal', 'descuentoTotal', 'total', 'tipoBadge'))->render();
     }
 
     public function comanda($mesa_id)

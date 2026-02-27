@@ -39,10 +39,16 @@
         white-space: nowrap;
     }
 
+    /* ── Mobile compacto ─────────────────────────── */
     @media (max-width: 575px) {
         .page-title { font-size: 0.9rem !important; }
         .card-header-custom { flex-wrap: wrap; gap: 6px; }
         .card-header-custom h2 { font-size: 0.85rem; }
+        .check-col { width: 50px; }
+        .qty-input { width: 42px; font-size: 0.85rem; padding: 1px 2px; }
+        .total-seleccion { font-size: 1.2rem; }
+        #display-total { font-size: 1.5rem !important; }
+        .pendiente-item { font-size: 0.8rem; }
     }
 </style>
 @endsection
@@ -86,10 +92,10 @@
                     <table class="table-custom mb-0" id="tabla-productos">
                         <thead>
                             <tr>
-                                <th class="check-col" title="Cantidad a cobrar en esta cuenta">Cobrar</th>
+                                <th class="check-col" title="Cantidad a cobrar en esta cuenta">Qty</th>
                                 <th>Producto</th>
-                                <th class="text-center">En mesa</th>
-                                <th class="text-end">Precio unit.</th>
+                                <th class="text-center d-none d-sm-table-cell">En mesa</th>
+                                <th class="text-end d-none d-sm-table-cell">P. unit.</th>
                                 <th class="text-end">Subtotal</th>
                             </tr>
                         </thead>
@@ -108,14 +114,15 @@
                                 </td>
                                 <td>
                                     <strong>{{ $item->producto->name }}</strong>
+                                    <span class="d-sm-none text-muted small"> ({{ $item->amount }})</span>
                                     @if($item->observacion)
                                         <br><small class="text-muted"><i class="bi bi-chat-dots"></i> {{ $item->observacion }}</small>
                                     @endif
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center d-none d-sm-table-cell">
                                     <span class="badge bg-secondary">{{ $item->amount }}</span>
                                 </td>
-                                <td class="text-end">$ {{ number_format($unitPrice, 0, ',', '.') }}</td>
+                                <td class="text-end d-none d-sm-table-cell">$ {{ number_format($unitPrice, 0, ',', '.') }}</td>
                                 <td class="text-end" id="row-sub-{{ $item->id }}">$ 0</td>
                             </tr>
                             @endforeach
@@ -157,10 +164,20 @@
             </div>
         </div>
 
-        <div class="card-custom mt-3">
-            <div class="card-body-custom text-center py-2">
-                <small class="text-muted">Productos restantes: <strong>{{ $productosTable->count() }}</strong></small>
-                <br><small class="text-muted">Total mesa pendiente: <strong>$ {{ number_format($totalMesa, 0, ',', '.') }}</strong></small>
+        <div class="card-custom mt-3" id="card-pendientes">
+            <div class="card-header-custom py-2 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #e67e22, #d35400) !important; cursor:pointer;" onclick="togglePendientes()">
+                <h6 class="mb-0"><i class="bi bi-hourglass-split"></i> Pendiente: <span id="total-pendiente-valor">$ {{ number_format($totalMesa, 0, ',', '.') }}</span></h6>
+                <i class="bi bi-chevron-down" id="chevron-pendientes" style="transition:transform .2s;"></i>
+            </div>
+            <div id="lista-pendientes" class="card-body-custom py-1" style="max-height:200px;overflow-y:auto;">
+                <div class="text-center py-2">
+                    <small class="text-muted">Selecciona productos para ver qué queda</small>
+                </div>
+            </div>
+            <div class="text-center py-2" id="btn-imprimir-pendientes-wrap" style="display:none;">
+                <button type="button" id="btn-imprimir-pendientes" class="btn btn-sm btn-outline-warning w-100">
+                    <i class="bi bi-printer"></i> Imprimir pendientes
+                </button>
             </div>
         </div>
     </div>
@@ -338,6 +355,9 @@ function recalcularSeleccion() {
     if (dp) dp.textContent = fmt(propinaSugerida);
     document.getElementById('display-total').textContent = fmt(total);
 
+    // Actualizar lista de pendientes
+    actualizarPendientes();
+
     var haySeleccion = subtotalSeleccion > 0;
     document.getElementById('msg-sin-seleccion').style.display = haySeleccion ? 'none' : '';
     document.getElementById('btns-accion').style.display = haySeleccion ? 'flex' : 'none';
@@ -391,6 +411,31 @@ document.getElementById('btn-preliminar')?.addEventListener('click', function() 
     window.open('/preliminar-parcial/' + mesaId
         + '?ids='  + items.ids.join(',')
         + '&qtys=' + items.qtys.join(','), '_blank');
+});
+
+// ── Items pendientes (restantes) ─────────────────────────────────────────────
+function itemsPendientes() {
+    var ids = [], qtys = [];
+    document.querySelectorAll('.qty-input').forEach(function(inp) {
+        var seleccionado = parseInt(inp.value) || 0;
+        var max = parseInt(inp.max) || 0;
+        var restante = max - seleccionado;
+        if (restante > 0) {
+            ids.push(inp.dataset.id);
+            qtys.push(restante);
+        }
+    });
+    return { ids: ids, qtys: qtys };
+}
+
+// ── Imprimir pendientes ──────────────────────────────────────────────────────
+document.getElementById('btn-imprimir-pendientes')?.addEventListener('click', function() {
+    var items = itemsPendientes();
+    if (!items.ids.length) return;
+    window.open('/preliminar-parcial/' + mesaId
+        + '?ids='  + items.ids.join(',')
+        + '&qtys=' + items.qtys.join(',')
+        + '&tipo=pendientes', '_blank');
 });
 
 // ── Abrir modal de pago ───────────────────────────────────────────────────────
@@ -508,6 +553,63 @@ document.getElementById('confirmar-parcial-btn')?.addEventListener('click', func
     bootstrap.Modal.getInstance(document.getElementById('modalPagoParcial'))?.hide();
     setTimeout(function() { window.location.reload(); }, 800);
 });
+
+function togglePendientes() {
+    var body = document.getElementById('lista-pendientes');
+    var chevron = document.getElementById('chevron-pendientes');
+    if (body.style.display === 'none') {
+        body.style.display = '';
+        chevron.style.transform = 'rotate(0deg)';
+    } else {
+        body.style.display = 'none';
+        chevron.style.transform = 'rotate(-90deg)';
+    }
+}
+
+function actualizarPendientes() {
+    var container = document.getElementById('lista-pendientes');
+    var totalPendienteEl = document.getElementById('total-pendiente-valor');
+    if (!container) return;
+
+    var pendientes = [];
+    var totalPendiente = 0;
+
+    document.querySelectorAll('.qty-input').forEach(function(inp) {
+        var seleccionado = parseInt(inp.value) || 0;
+        var max = parseInt(inp.max) || 0;
+        var restante = max - seleccionado;
+        if (restante > 0) {
+            var row = inp.closest('tr');
+            var unitPrice = parseFloat(row.dataset.unitPrice) || 0;
+            var nombre = row.querySelector('td:nth-child(2) strong').textContent;
+            var sub = restante * unitPrice;
+            totalPendiente += sub;
+            pendientes.push({ nombre: nombre, qty: restante, sub: sub });
+        }
+    });
+
+    if (pendientes.length === 0) {
+        container.innerHTML = '<div class="text-center py-2"><i class="bi bi-check-circle text-success"></i> <small class="text-success fw-bold">Todo cobrado</small></div>';
+    } else {
+        var html = '';
+        pendientes.forEach(function(p) {
+            html += '<div class="d-flex justify-content-between align-items-center py-1 px-1 border-bottom">'
+                + '<span><span class="badge bg-secondary me-1">' + p.qty + 'x</span> ' + p.nombre + '</span>'
+                + '<span class="fw-bold small">' + fmt(p.sub) + '</span>'
+                + '</div>';
+        });
+        container.innerHTML = html;
+    }
+
+    if (totalPendienteEl) totalPendienteEl.textContent = fmt(totalPendiente);
+
+    var btnWrap = document.getElementById('btn-imprimir-pendientes-wrap');
+    if (btnWrap) {
+        var haySeleccion = document.querySelectorAll('.qty-input').length > 0 &&
+            Array.from(document.querySelectorAll('.qty-input')).some(function(inp) { return parseInt(inp.value) > 0; });
+        btnWrap.style.display = (pendientes.length > 0 && haySeleccion) ? '' : 'none';
+    }
+}
 
 recalcularSeleccion();
 </script>

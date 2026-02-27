@@ -88,7 +88,7 @@
     @if($restDireccion)<p>{{ $restDireccion }}</p>@endif
     <p>Fecha: {{ date('d/m/Y H:i') }}</p>
     <h2>{{ $mesa->name }}</h2>
-    <p><span class="badge-parcial">CUENTA PARCIAL</span></p>
+    <p><span class="badge-parcial">{{ $tipoBadge ?? 'CUENTA PARCIAL' }}</span></p>
     <table style="width: 100%;">
         <thead>
             <tr>
