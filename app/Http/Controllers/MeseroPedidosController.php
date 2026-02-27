@@ -43,20 +43,6 @@ class MeseroPedidosController extends Controller
     }
 
     /**
-     * Ping ligero para notificaciones — solo IDs de pedidos listos
-     */
-    public function ping()
-    {
-        $userId = Auth::id();
-        $ids = ElementTable::where('status', 1)
-            ->where('estado', ElementTable::ESTADO_LISTO)
-            ->where('user_id', $userId)
-            ->pluck('id');
-
-        return response()->json(['ids' => $ids]);
-    }
-
-    /**
      * Obtener pedidos vía AJAX
      */
     public function getPedidosAjax()

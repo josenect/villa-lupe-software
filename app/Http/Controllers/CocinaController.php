@@ -25,24 +25,6 @@ class CocinaController extends Controller
     }
 
     /**
-     * Ping ligero para notificaciones — solo IDs de pedidos pendientes/en cocina
-     */
-    public function ping()
-    {
-        $ids = ElementTable::where('status', 1)
-            ->whereIn('estado', [
-                ElementTable::ESTADO_PENDIENTE,
-                ElementTable::ESTADO_EN_COCINA,
-            ])
-            ->whereHas('producto', function ($query) {
-                $query->whereIn('category', Categoria::slugsCocina());
-            })
-            ->pluck('id');
-
-        return response()->json(['ids' => $ids]);
-    }
-
-    /**
      * Obtener pedidos vía AJAX (sin recargar página)
      */
     public function getPedidosAjax()

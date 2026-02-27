@@ -1144,22 +1144,56 @@
     @if(auth()->user()->esMesero() || auth()->user()->esAdmin() || auth()->user()->esCocina())
     <script>
     (function() {
-        var USER_ID   = {{ auth()->id() }};
-        var USER_ROL  = '{{ auth()->user()->rol }}';
-        var INTERVAL  = 15000;
-        var IDS_KEY   = 'vl_nids_' + USER_ID;   // IDs ya notificados (localStorage)
-        var OFF_KEY   = 'vl_alrt_off';           // usuario silenció manualmente
+        var MES_KEY = 'vl_mes_{{ auth()->id() }}';  // IDs mesero notificados
+        var COC_KEY = 'vl_coc_{{ auth()->id() }}';  // IDs cocina notificados
+        var OFF_KEY = 'vl_alrt_off';
 
-        function getIds()     { try { return JSON.parse(localStorage.getItem(IDS_KEY) || '[]'); } catch(e) { return []; } }
-        function saveIds(ids) { if (ids.length > 300) ids = ids.slice(-300); try { localStorage.setItem(IDS_KEY, JSON.stringify(ids)); } catch(e) {} }
-        function isMuted()    { return localStorage.getItem(OFF_KEY) === '1'; }
+        function getStore(key) { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { return []; } }
+        function setStore(key, ids) { if (ids.length > 300) ids = ids.slice(-300); try { localStorage.setItem(key, JSON.stringify(ids)); } catch(e) {} }
+        function isMuted() { return localStorage.getItem(OFF_KEY) === '1'; }
 
-        // ── Vibración (sin permiso previo) ────────────────────────────────────
+        // ── Audio global (requiere primera interacción del usuario) ──────────
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+        var audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function sonar() {
+            if (!audioCtx || isMuted()) return;
+            try {
+                [0, 150, 300].forEach(function(delay, i) {
+                    setTimeout(function() {
+                        var osc = audioCtx.createOscillator();
+                        var gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.frequency.value = [523, 659, 784][i];
+                        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.2);
+                    }, delay);
+                });
+            } catch(e) {}
+        }
+
+        // Inicializar audio con cualquier interacción
+        ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(function(evt) {
+            document.addEventListener(evt, function() { initAudio(); });
+        });
+
+        // Reanudar audio al volver a la pestaña
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        });
+
         function vibrar() {
             if ('vibrate' in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
         }
 
-        // ── Toast visual (funciona en todas las páginas) ──────────────────────
         function mostrarToast(mensaje) {
             if (isMuted()) return;
             var t = document.createElement('div');
@@ -1169,19 +1203,17 @@
             setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 4000);
         }
 
-        // ── Notificación del sistema ──────────────────────────────────────────
         function notificar(titulo, cuerpo) {
             if (isMuted()) return;
+            sonar();
             mostrarToast(cuerpo);
             if (!('Notification' in window) || Notification.permission !== 'granted') return;
             try { new Notification(titulo, { body: cuerpo, icon: '/favicon.ico', tag: 'vl-alert', renotify: true }); } catch(e) {}
         }
 
-        // ── Solicitar permiso (requiere clic — obligatorio en todos los navegadores) ─
         window.solicitarAlertas = function() {
             if (!('Notification' in window)) { alert('Tu navegador no admite notificaciones.'); return; }
             if (Notification.permission === 'granted') {
-                // Si ya tiene permiso, toggle silencio
                 var off = localStorage.getItem(OFF_KEY) === '1';
                 off ? localStorage.removeItem(OFF_KEY) : localStorage.setItem(OFF_KEY, '1');
                 actualizarBoton();
@@ -1191,7 +1223,7 @@
                 if (p === 'granted') {
                     localStorage.removeItem(OFF_KEY);
                     actualizarBoton();
-                    new Notification('✅ Alertas activadas', { body: 'Recibirás notificaciones de pedidos.', icon: '/favicon.ico' });
+                    new Notification('Alertas activadas', { body: 'Recibirás notificaciones de pedidos.', icon: '/favicon.ico' });
                 } else {
                     alert('Permiso denegado. Habilita las notificaciones desde la configuración del navegador.');
                 }
@@ -1208,51 +1240,56 @@
             btn.title = activo ? 'Alertas activas — clic para silenciar' : 'Activar alertas de pedidos';
         }
 
-        // ── Poll mesero/admin: pedidos listos (solo IDs) ──────────────────────
-        function pollMesero() {
-            fetch('/mesero/pedidos/ping', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        // ── Polling inteligente: 1 petición cada 5s (~80 bytes, <50ms) ────────
+        var lastMH = null;  // hash mesero
+        var lastCH = null;  // hash cocina
+        var INTERVAL = 5000;
+
+        function poll() {
+            fetch('/notifications/check', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                var ids = data.ids || [];
-                var notificados = getIds();
-                var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
-                if (nuevos.length > 0) {
-                    vibrar();
-                    notificar('🍽️ Villa Lupe — Pedido listo', nuevos.length === 1 ? '1 pedido listo para entregar' : nuevos.length + ' pedidos listos para entregar');
-                    saveIds(notificados.concat(nuevos));
+                // Mesero: pedidos listos
+                if (data.mh !== undefined && lastMH !== null && data.mh !== lastMH) {
+                    var ids = data.m || [];
+                    var notificados = getStore(MES_KEY);
+                    var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
+                    if (nuevos.length > 0) {
+                        vibrar();
+                        notificar('Villa Lupe — Pedido listo',
+                            nuevos.length === 1 ? '1 pedido listo para entregar' : nuevos.length + ' pedidos listos para entregar');
+                        setStore(MES_KEY, notificados.concat(nuevos));
+                    }
+                    window.dispatchEvent(new CustomEvent('vl:mesero_update', { detail: data }));
                 }
+                if (data.mh !== undefined) lastMH = data.mh;
+
+                // Cocina: pedidos nuevos
+                if (data.ch !== undefined && lastCH !== null && data.ch !== lastCH) {
+                    var ids = data.c || [];
+                    var notificados = getStore(COC_KEY);
+                    var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
+                    if (nuevos.length > 0) {
+                        vibrar();
+                        notificar('Cocina — Nuevo pedido',
+                            nuevos.length + ' pedido(s) nuevo(s) por preparar');
+                        setStore(COC_KEY, notificados.concat(nuevos));
+                    }
+                    window.dispatchEvent(new CustomEvent('vl:cocina_update', { detail: data }));
+                }
+                if (data.ch !== undefined) lastCH = data.ch;
             }).catch(function() {});
         }
 
-        // ── Poll cocina/admin: nuevos pedidos pendientes (solo IDs) ──────────
-        function pollCocina() {
-            fetch('/cocina/pedidos/ping', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var ids = data.ids || [];
-                var notificados = getIds();
-                var nuevos = ids.filter(function(id) { return notificados.indexOf(id) === -1; });
-                if (nuevos.length > 0) {
-                    vibrar();
-                    notificar('🔔 Cocina — Nuevo pedido', nuevos.length + ' pedido(s) nuevo(s) por preparar');
-                    saveIds(notificados.concat(nuevos));
-                }
-            }).catch(function() {});
-        }
-
-        // ── Arranque ──────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function() {
             actualizarBoton();
-            if (USER_ROL === 'mesero' || USER_ROL === 'admin') setInterval(pollMesero, INTERVAL);
-            if (USER_ROL === 'cocina' || USER_ROL === 'admin') setInterval(pollCocina, INTERVAL);
+            poll(); // primera consulta inmediata (establece hashes base)
+            setInterval(poll, INTERVAL);
         });
 
         // Al volver a la pestaña: poll inmediato
         document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                if (USER_ROL === 'mesero' || USER_ROL === 'admin') pollMesero();
-                if (USER_ROL === 'cocina' || USER_ROL === 'admin') pollCocina();
-            }
+            if (!document.hidden) poll();
         });
     })();
     </script>

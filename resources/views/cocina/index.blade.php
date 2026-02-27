@@ -295,6 +295,7 @@
                                     @endif
                                     <div class="mt-1">
                                         <small class="text-muted"><i class="bi bi-clock"></i> {{ date('H:i', strtotime($pedido->record)) }}</small>
+                                        <small class="text-muted ms-2"><i class="bi bi-person"></i> {{ $pedido->usuario->name ?? 'N/A' }}</small>
                                         <span class="badge {{ $pedido->estado === 'en_cocina' ? 'bg-danger' : 'bg-warning text-dark' }} ms-1">
                                             {{ $pedido->estado === 'en_cocina' ? 'En Cocina' : 'Pendiente' }}
                                         </span>
@@ -409,8 +410,6 @@
 </audio>
 
 <script>
-    const REFRESH_TIME = {{ $refreshTime }};
-    let refreshInterval;
     // Inicializar con los IDs de pedidos actuales para no sonar en la primera carga
     let pedidosAnteriores = [{{ $pedidos->pluck('id')->implode(',') }}];
     let sonidoHabilitado = true;
@@ -523,10 +522,10 @@
         }, 10000);
     }
 
-    // Iniciar auto-actualización
-    function iniciarAutoRefresh() {
-        refreshInterval = setInterval(cargarPedidos, REFRESH_TIME);
-    }
+    // Escuchar eventos SSE del layout global para refrescar la UI
+    window.addEventListener('vl:cocina_update', function() {
+        cargarPedidos();
+    });
 
     // Cargar pedidos via AJAX
     function cargarPedidos() {
@@ -585,6 +584,7 @@
                     ${obsHTML}
                     <div class="mt-1">
                         <small class="text-muted"><i class="bi bi-clock"></i> ${pedido.record}</small>
+                        <small class="text-muted ms-2"><i class="bi bi-person"></i> ${pedido.mesero_nombre}</small>
                         <span class="badge ${badgeClass} ms-1">${estadoTexto}</span>
                     </div>
                 </div>
@@ -932,7 +932,6 @@
             sonidoHabilitado = false;
         }
         actualizarBotonSonido();
-        iniciarAutoRefresh();
 
         // Inicializar audio con CUALQUIER interacción — no requiere botón específico
         // Se llama cada vez para reanudar si el contexto fue suspendido

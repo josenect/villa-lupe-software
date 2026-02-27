@@ -357,8 +357,6 @@
 
 @section('scripts')
 <script>
-    const REFRESH_TIME = {{ $refreshTime }};
-    let refreshInterval;
     let pedidosListosAnteriores = {
         cocina: [{{ $pedidosListosCocina->pluck('id')->implode(',') }}],
         otros: [{{ $pedidosListosOtros->pluck('id')->implode(',') }}]
@@ -401,9 +399,10 @@
 
     // Notificaciones del sistema manejadas por el script global del layout
 
-    function iniciarAutoRefresh() {
-        refreshInterval = setInterval(cargarPedidos, REFRESH_TIME);
-    }
+    // Escuchar eventos SSE del layout global para refrescar la UI
+    window.addEventListener('vl:mesero_update', function() {
+        cargarPedidos();
+    });
 
     function cargarPedidos() {
         fetch('{{ route("mesero.pedidos.ajax") }}', {
@@ -687,7 +686,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        iniciarAutoRefresh();
         // Inicializar audio con CUALQUIER interacción
         ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(function(evt) {
             document.addEventListener(evt, function() { inicializarAudio(); });
