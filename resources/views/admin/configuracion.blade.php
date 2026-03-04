@@ -200,6 +200,17 @@
                     <span class="toggle-slider"></span>
                 </label>
             </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label"><i class="bi bi-truck"></i> Domicilios</div>
+                    <div class="toggle-desc">Habilita la sección de pedidos a domicilio</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="domicilios_habilitado"
+                           {{ $settings['domicilios_habilitado'] === '1' ? 'checked' : '' }}>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
         </div>
     </div>
 

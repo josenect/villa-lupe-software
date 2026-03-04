@@ -206,10 +206,22 @@
                         @enderror
                     </div>
                     
-                    <button type="submit" class="btn btn-login">
+                    <button type="submit" class="btn btn-login" id="btn-login">
                         <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
                     </button>
                 </form>
+
+                <script>
+                    document.querySelector('form').addEventListener('submit', function() {
+                        var btn = document.getElementById('btn-login');
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Ingresando...';
+                    });
+                </script>
+                <style>
+                    .spin { animation: spin 1s linear infinite; display: inline-block; }
+                    @keyframes spin { to { transform: rotate(360deg); } }
+                </style>
             </div>
         </div>
         

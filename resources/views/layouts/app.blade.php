@@ -901,6 +901,11 @@
         #btnAlertasGlobal.activo { border-color: #27ae60; color: #27ae60; }
         body.dark-mode #btnAlertasGlobal { border-color: rgba(200,210,240,0.3); color: #dde3f0; }
         body.dark-mode #btnAlertasGlobal.activo { border-color: #27ae60; color: #27ae60; }
+
+        /* Ocultar toggler en desktop, mostrar botones inline */
+        @media (min-width: 1200px) {
+            .navbar-toggler { display: none; }
+        }
     </style>
 
     @yield('styles')
@@ -924,9 +929,22 @@
                 @endif
                 {{ $navRestNombre }}
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <!-- Botones siempre visibles junto al toggler -->
+            <div class="d-flex align-items-center gap-2 order-lg-last">
+                @auth
+                    @if(auth()->user()->esMesero() || auth()->user()->esAdmin() || auth()->user()->esCocina())
+                    <button id="btnAlertasGlobal" title="Activar alertas de pedidos" onclick="solicitarAlertas()">
+                        <i class="bi bi-bell" id="iconoAlertasGlobal"></i>
+                    </button>
+                    @endif
+                @endauth
+                <button id="darkModeToggle" title="Modo oscuro">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     @auth
@@ -952,8 +970,27 @@
                                 </a>
                             </li>
                             @endif
+                            @php
+                                $navDomiciliosVisible = \App\Models\Setting::get('domicilios_habilitado', '0') === '1';
+                            @endphp
+                            @if($navDomiciliosVisible)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('domicilios*') ? 'active' : '' }}" href="{{ route('domicilios.index') }}">
+                                    <i class="bi bi-truck"></i> Domicilios
+                                    @php
+                                        $domiciliosActivos = \App\Models\Table::domicilios()
+                                            ->where('status', 1)
+                                            ->whereHas('elementTables', fn($q) => $q->where('status', 1)->where('estado', '!=', 'cancelado'))
+                                            ->count();
+                                    @endphp
+                                    @if($domiciliosActivos > 0)
+                                        <span class="badge bg-warning text-dark">{{ $domiciliosActivos }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            @endif
                         @endif
-                        
+
                         @if(auth()->user()->esAdmin())
                             @php
                                 $cancelacionesPendientes = \App\Models\ElementTable::where('estado', 'cancelacion_solicitada')->count();
@@ -1040,22 +1077,6 @@
                             </li>
                         @endif
                         
-                        @if(auth()->user()->esMesero() || auth()->user()->esAdmin() || auth()->user()->esCocina())
-                        <!-- Campana de alertas -->
-                        <li class="nav-item d-flex align-items-center mx-1">
-                            <button id="btnAlertasGlobal" title="Activar alertas de pedidos" onclick="solicitarAlertas()">
-                                <i class="bi bi-bell" id="iconoAlertasGlobal"></i>
-                            </button>
-                        </li>
-                        @endif
-
-                        <!-- Dark mode toggle -->
-                        <li class="nav-item d-flex align-items-center mx-1">
-                            <button id="darkModeToggle" title="Modo oscuro">
-                                <i class="bi bi-moon-fill"></i>
-                            </button>
-                        </li>
-
                         <!-- Usuario y Logout -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -1245,7 +1266,12 @@
         var lastCH = null;  // hash cocina
         var INTERVAL = 5000;
 
+        function isAlertaActiva() {
+            return ('Notification' in window) && Notification.permission === 'granted' && !isMuted();
+        }
+
         function poll() {
+            if (!isAlertaActiva()) return;
             fetch('/notifications/check', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {

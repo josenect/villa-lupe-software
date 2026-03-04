@@ -81,7 +81,13 @@ class FacturaController extends Controller
             }
 
             // Liberar occupied_at al facturar la mesa
-            Table::where('id', $mesaId)->update(['occupied_at' => null]);
+            $mesaObj = Table::find($mesaId);
+            if ($mesaObj) {
+                $mesaObj->update(['occupied_at' => null]);
+                if ($mesaObj->is_domicilio) {
+                    $mesaObj->update(['status' => 0]);
+                }
+            }
 
         }else{
             $ultimaFactura = Factura::where('table_id', $mesaId)
@@ -191,7 +197,13 @@ class FacturaController extends Controller
             ->count();
 
         if ($restantes === 0) {
-            Table::where('id', $mesaId)->update(['occupied_at' => null]);
+            $mesaObj = Table::find($mesaId);
+            if ($mesaObj) {
+                $mesaObj->update(['occupied_at' => null]);
+                if ($mesaObj->is_domicilio) {
+                    $mesaObj->update(['status' => 0]);
+                }
+            }
         }
 
         return redirect()->route('factura.visual', $numeroFactura);

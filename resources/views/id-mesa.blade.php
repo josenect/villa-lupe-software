@@ -106,12 +106,36 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
     <h1 class="page-title mb-0">
-        <i class="bi bi-table"></i> {{ $mesa->name }}
+        <i class="bi bi-{{ $mesa->is_domicilio ? 'truck' : 'table' }}"></i> {{ $mesa->name }}
     </h1>
-    <a href="/" class="btn-secondary-custom">
+    <a href="{{ $mesa->is_domicilio ? route('domicilios.index') : '/' }}" class="btn-secondary-custom">
         <i class="bi bi-arrow-left"></i> Volver
     </a>
 </div>
+
+@if($mesa->is_domicilio)
+<div class="card-custom mb-3 fade-in">
+    <div class="card-header-custom" style="background: linear-gradient(135deg, #e67e22, #d35400);">
+        <h2><i class="bi bi-truck"></i> Datos del Domicilio</h2>
+    </div>
+    <div class="card-body-custom">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <strong><i class="bi bi-person-fill"></i> Cliente:</strong> {{ $mesa->cliente_nombre }}
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong><i class="bi bi-telephone-fill"></i> Telefono:</strong> {{ $mesa->cliente_telefono }}
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong><i class="bi bi-geo-alt-fill"></i> Direccion:</strong> {{ $mesa->cliente_direccion }}
+            </div>
+        </div>
+        <a href="{{ route('domicilios.edit', $mesa->id) }}" class="btn-warning-custom btn-sm mt-2">
+            <i class="bi bi-pencil"></i> Editar datos
+        </a>
+    </div>
+</div>
+@endif
 
 @if(session('success'))
     <div class="alert-custom alert-success-custom fade-in">

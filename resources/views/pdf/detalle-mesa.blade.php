@@ -78,6 +78,12 @@
     @if($restDireccion)<p>{{ $restDireccion }}</p>@endif
     <p>Fecha: {{ date('d/m/Y H:i') }}</p>
     <h2>{{ $mesa->name }}</h2>
+    @if($mesa->is_domicilio)
+    <p style="font-size:11px; font-weight:bold;">DOMICILIO</p>
+    <p style="font-size:10px;">{{ $mesa->cliente_nombre }}</p>
+    <p style="font-size:10px;">Tel: {{ $mesa->cliente_telefono }}</p>
+    <p style="font-size:10px;">Dir: {{ $mesa->cliente_direccion }}</p>
+    @endif
     <table style="width: 100%;">
         <thead>
             <tr>

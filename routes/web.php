@@ -14,6 +14,7 @@ use App\Http\Controllers\MeseroPedidosController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\DomicilioController;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Route;
 
@@ -36,7 +37,7 @@ Route::middleware(['role'])->group(function () {
 
     // Página de inicio (admin y mesero)
     Route::get('/', function () {
-        $tables = Table::where('status',1)->get();
+        $tables = Table::where('status',1)->where('is_domicilio', false)->get();
         foreach ($tables as $key => $value) {
             $tables[$key]->status = ElementTable::where('status',1)
                 ->where('table_id',$value->id)
@@ -63,6 +64,15 @@ Route::middleware(['role'])->group(function () {
             Route::put('{mesa_id}/productos/{id}/edit', [TransactionsTableController::class, 'update'])->name('update.product.table');
             // Solicitar cancelación (mesero)
             Route::post('{mesa_id}/productos/{id}/solicitar-cancelacion', [TransactionsTableController::class, 'solicitarCancelacion'])->name('solicitar.cancelacion');
+        });
+
+        // Domicilios
+        Route::prefix('domicilios')->group(function () {
+            Route::get('', [DomicilioController::class, 'index'])->name('domicilios.index');
+            Route::get('crear', [DomicilioController::class, 'create'])->name('domicilios.create');
+            Route::post('', [DomicilioController::class, 'store'])->name('domicilios.store');
+            Route::get('{id}/editar', [DomicilioController::class, 'edit'])->name('domicilios.edit');
+            Route::put('{id}', [DomicilioController::class, 'update'])->name('domicilios.update');
         });
 
         // Cobro separado por cuenta

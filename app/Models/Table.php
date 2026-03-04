@@ -21,14 +21,34 @@ class Table extends Model
         'location',
         'status',
         'occupied_at',
+        'is_domicilio',
+        'cliente_nombre',
+        'cliente_telefono',
+        'cliente_direccion',
     ];
 
     protected $casts = [
         'occupied_at' => 'datetime',
+        'is_domicilio' => 'boolean',
     ];
 
     public function elementTables()
     {
         return $this->hasMany(ElementTable::class, 'table_id');
+    }
+
+    public function scopeDomicilios($query)
+    {
+        return $query->where('is_domicilio', true);
+    }
+
+    public function scopeMesasFisicas($query)
+    {
+        return $query->where('is_domicilio', false);
+    }
+
+    public function esDomicilio()
+    {
+        return $this->is_domicilio;
     }
 }

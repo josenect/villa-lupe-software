@@ -18,6 +18,7 @@ class SettingController extends Controller
             'restaurante_logo'         => Setting::get('restaurante_logo', ''),
             'propina_habilitada'       => Setting::get('propina_habilitada', '1'),
             'propina_porcentaje'       => Setting::get('propina_porcentaje', (string) env('PROPINA', 10)),
+            'domicilios_habilitado'    => Setting::get('domicilios_habilitado', '0'),
         ];
 
         return view('admin.configuracion', compact('settings'));
@@ -39,6 +40,7 @@ class SettingController extends Controller
         Setting::set('restaurante_propiedad',     $request->input('restaurante_propiedad', ''));
         Setting::set('restaurante_direccion',     $request->input('restaurante_direccion', ''));
         Setting::set('propina_habilitada',        $request->has('propina_habilitada') ? '1' : '0');
+        Setting::set('domicilios_habilitado',    $request->has('domicilios_habilitado') ? '1' : '0');
         Setting::set('propina_porcentaje',        (string) (int) $request->input('propina_porcentaje', 0));
 
         if ($request->hasFile('restaurante_logo')) {
