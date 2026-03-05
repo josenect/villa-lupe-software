@@ -101,6 +101,16 @@ class TableController extends Controller
         }else{
 
             $table = Table::findOrFail($mesa_id);
+
+            // Verificar si tiene historial (facturas, impresiones, productos pasados)
+            $tieneHistorial = DB::table('facturas')->where('table_id', $mesa_id)->exists()
+                || DB::table('log_impresiones')->where('table_id', $mesa_id)->exists()
+                || ElementTable::where('table_id', $mesa_id)->exists();
+
+            if ($tieneHistorial) {
+                return redirect()->route('admin.mesas.showAll')->with('error', 'Esta mesa tiene historial de facturas o pedidos y no se puede eliminar. Si deseas ocultarla, desactívala desde la opción de editar.');
+            }
+
             $table->delete();
             return redirect()->route('admin.mesas.showAll')->with('success', 'La Mesa ha sido eliminada.');
         }

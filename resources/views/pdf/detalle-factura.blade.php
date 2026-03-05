@@ -95,11 +95,12 @@
     @if($restDireccion)<p>{{ $restDireccion }}</p>@endif
     <p>Fecha: {{ $factura->created_at }}</p>
     <h2>{{ $mesa->name }}</h2>
-    @if($mesa->is_domicilio)
+    @php $domInfo = $mesa->is_domicilio ? $mesa->domicilios()->latest()->first() : null; @endphp
+    @if($domInfo)
     <p style="font-size:11px; font-weight:bold;">DOMICILIO</p>
-    <p style="font-size:10px;">{{ $mesa->cliente_nombre }}</p>
-    <p style="font-size:10px;">Tel: {{ $mesa->cliente_telefono }}</p>
-    <p style="font-size:10px;">Dir: {{ $mesa->cliente_direccion }}</p>
+    <p style="font-size:10px;">{{ $domInfo->cliente_nombre }}</p>
+    <p style="font-size:10px;">Tel: {{ $domInfo->cliente_telefono }}</p>
+    <p style="font-size:10px;">Dir: {{ $domInfo->cliente_direccion }}</p>
     @endif
     <h2>Factura: {{ $factura->numero_factura }}</h2>
     

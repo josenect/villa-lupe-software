@@ -11,20 +11,12 @@ class Table extends Model
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'location',
         'status',
         'occupied_at',
         'is_domicilio',
-        'cliente_nombre',
-        'cliente_telefono',
-        'cliente_direccion',
     ];
 
     protected $casts = [
@@ -37,7 +29,22 @@ class Table extends Model
         return $this->hasMany(ElementTable::class, 'table_id');
     }
 
-    public function scopeDomicilios($query)
+    public function facturas()
+    {
+        return $this->hasMany(Factura::class, 'table_id');
+    }
+
+    public function domicilio()
+    {
+        return $this->hasOne(Domicilio::class, 'table_id')->where('estado', Domicilio::ESTADO_ACTIVO);
+    }
+
+    public function domicilios()
+    {
+        return $this->hasMany(Domicilio::class, 'table_id');
+    }
+
+    public function scopeDomicilioSlots($query)
     {
         return $query->where('is_domicilio', true);
     }

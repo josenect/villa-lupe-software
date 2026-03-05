@@ -86,6 +86,8 @@ class FacturaController extends Controller
                 $mesaObj->update(['occupied_at' => null]);
                 if ($mesaObj->is_domicilio) {
                     $mesaObj->update(['status' => 0]);
+                    // Marcar domicilio como facturado
+                    $mesaObj->domicilio?->update(['estado' => \App\Models\Domicilio::ESTADO_FACTURADO]);
                 }
             }
 
@@ -202,6 +204,7 @@ class FacturaController extends Controller
                 $mesaObj->update(['occupied_at' => null]);
                 if ($mesaObj->is_domicilio) {
                     $mesaObj->update(['status' => 0]);
+                    $mesaObj->domicilio?->update(['estado' => \App\Models\Domicilio::ESTADO_FACTURADO]);
                 }
             }
         }

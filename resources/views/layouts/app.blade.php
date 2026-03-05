@@ -352,8 +352,10 @@
         }
         
         .alert-error-custom {
-            background-color: rgba(231, 76, 60, 0.15);
-            color: var(--accent-color);
+            background-color: rgba(255, 255, 255, 0.92);
+            color: #c0392b;
+            border-left: 4px solid #e74c3c;
+            box-shadow: 0 2px 12px rgba(231, 76, 60, 0.2);
         }
         
         /* Mesa Card (for grid view) */
@@ -978,10 +980,7 @@
                                 <a class="nav-link {{ request()->is('domicilios*') ? 'active' : '' }}" href="{{ route('domicilios.index') }}">
                                     <i class="bi bi-truck"></i> Domicilios
                                     @php
-                                        $domiciliosActivos = \App\Models\Table::domicilios()
-                                            ->where('status', 1)
-                                            ->whereHas('elementTables', fn($q) => $q->where('status', 1)->where('estado', '!=', 'cancelado'))
-                                            ->count();
+                                        $domiciliosActivos = \App\Models\Domicilio::activos()->count();
                                     @endphp
                                     @if($domiciliosActivos > 0)
                                         <span class="badge bg-warning text-dark">{{ $domiciliosActivos }}</span>

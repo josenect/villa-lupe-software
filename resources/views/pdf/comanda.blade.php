@@ -117,12 +117,13 @@
 <div class="header-sub">{{ $mesa->name }}</div>
 <div class="header-hora">{{ date('d/m/Y  H:i') }}</div>
 
-@if($mesa->is_domicilio)
+@php $domInfo = $mesa->is_domicilio ? $mesa->domicilios()->latest()->first() : null; @endphp
+@if($domInfo)
 <div class="sep-simple"></div>
 <div style="font-size:12px; font-weight:bold; text-align:center;">DOMICILIO</div>
-<div style="font-size:11px; text-align:center;">{{ $mesa->cliente_nombre }}</div>
-<div style="font-size:10px; text-align:center;">Tel: {{ $mesa->cliente_telefono }}</div>
-<div style="font-size:10px; text-align:center;">Dir: {{ $mesa->cliente_direccion }}</div>
+<div style="font-size:11px; text-align:center;">{{ $domInfo->cliente_nombre }}</div>
+<div style="font-size:10px; text-align:center;">Tel: {{ $domInfo->cliente_telefono }}</div>
+<div style="font-size:10px; text-align:center;">Dir: {{ $domInfo->cliente_direccion }}</div>
 @endif
 
 <div class="sep-doble"></div>

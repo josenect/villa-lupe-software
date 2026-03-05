@@ -47,6 +47,51 @@
         border-radius: 10px 0 0 10px;
     }
     
+    /* Botones +/- cantidad */
+    .btn-qty-minus, .btn-qty-plus {
+        border: 2px solid #e9ecef;
+        background: #f8f9fa;
+        color: #333;
+        font-size: 1.1rem;
+        font-weight: bold;
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    .btn-qty-minus {
+        border-radius: 10px 0 0 10px;
+        border-right: none;
+    }
+    .btn-qty-plus {
+        border-radius: 0 10px 10px 0;
+        border-left: none;
+    }
+    .btn-qty-minus:active {
+        background: #e74c3c;
+        color: white;
+        border-color: #e74c3c;
+    }
+    .btn-qty-plus:active {
+        background: #27ae60;
+        color: white;
+        border-color: #27ae60;
+    }
+    #inputCantidad {
+        width: 50px;
+        padding: 0.4rem 0.2rem;
+        height: 42px;
+    }
+    #inputCantidad::-webkit-inner-spin-button,
+    #inputCantidad::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
     /* Responsive para formulario agregar producto */
     @media (max-width: 768px) {
         .form-agregar-producto .row {
@@ -113,7 +158,7 @@
     </a>
 </div>
 
-@if($mesa->is_domicilio)
+@if($mesa->is_domicilio && $mesa->domicilio)
 <div class="card-custom mb-3 fade-in">
     <div class="card-header-custom" style="background: linear-gradient(135deg, #e67e22, #d35400);">
         <h2><i class="bi bi-truck"></i> Datos del Domicilio</h2>
@@ -121,16 +166,16 @@
     <div class="card-body-custom">
         <div class="row">
             <div class="col-md-4 mb-2">
-                <strong><i class="bi bi-person-fill"></i> Cliente:</strong> {{ $mesa->cliente_nombre }}
+                <strong><i class="bi bi-person-fill"></i> Cliente:</strong> {{ $mesa->domicilio->cliente_nombre }}
             </div>
             <div class="col-md-4 mb-2">
-                <strong><i class="bi bi-telephone-fill"></i> Telefono:</strong> {{ $mesa->cliente_telefono }}
+                <strong><i class="bi bi-telephone-fill"></i> Telefono:</strong> {{ $mesa->domicilio->cliente_telefono }}
             </div>
             <div class="col-md-4 mb-2">
-                <strong><i class="bi bi-geo-alt-fill"></i> Direccion:</strong> {{ $mesa->cliente_direccion }}
+                <strong><i class="bi bi-geo-alt-fill"></i> Direccion:</strong> {{ $mesa->domicilio->cliente_direccion }}
             </div>
         </div>
-        <a href="{{ route('domicilios.edit', $mesa->id) }}" class="btn-warning-custom btn-sm mt-2">
+        <a href="{{ route('domicilios.edit', $mesa->domicilio->id) }}" class="btn-warning-custom btn-sm mt-2">
             <i class="bi bi-pencil"></i> Editar datos
         </a>
     </div>
@@ -157,12 +202,12 @@
     $cardPropinaValor      = $cardPropinaHabilitada ? (int)(floor($total * $cardPropinaPct / 100 / 1000) * 1000) : 0;
 @endphp
 
-<!-- Info de la Mesa (colapsable en mobile) -->
+<!-- Info de la Mesa/Domicilio (colapsable en mobile) -->
 <div class="card-custom mb-4 fade-in">
     <div class="card-header-custom d-flex justify-content-between align-items-center"
          id="info-mesa-toggle" role="button" style="cursor:pointer; user-select:none;"
          onclick="toggleInfoMesa()">
-        <h2 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Mesa</h2>
+        <h2 class="mb-0"><i class="bi bi-info-circle"></i> Información {{ $mesa->is_domicilio ? 'del Domicilio' : 'de la Mesa' }}</h2>
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
             @if($mesa->occupied_at && $productosTable->count() > 0)
                 <span class="badge bg-dark bg-opacity-50 d-flex align-items-center gap-1" style="font-size:0.85rem; padding:6px 10px; border-radius:20px;">
@@ -180,8 +225,10 @@
         <div class="card-body-custom">
             <div class="row g-3">
                 <div class="col-md-8">
-                    <p class="mb-2"><strong><i class="bi bi-tag text-primary"></i> Nombre:</strong> {{ $mesa->name }}</p>
+                    <p class="mb-2"><strong><i class="bi bi-tag text-primary"></i> {{ $mesa->is_domicilio ? 'Pedido' : 'Nombre' }}:</strong> {{ $mesa->name }}</p>
+                    @if(!$mesa->is_domicilio)
                     <p class="mb-3"><strong><i class="bi bi-geo-alt text-primary"></i> Ubicación:</strong> {{ $mesa->location }}</p>
+                    @endif
                     <div class="action-buttons action-buttons-mesa">
                         @if($productosTable->count() > 0)
                             <a target="_blank" href="/visual-pdf-pre/{{ $mesa->id }}" class="btn-warning-custom">
@@ -248,7 +295,15 @@
                         <label class="form-label-custom">
                             <i class="bi bi-hash"></i> Cant.
                         </label>
-                        <input type="number" name="amount" class="form-control-custom" min="1" value="1" required>
+                        <div class="d-flex align-items-center gap-0">
+                            <button type="button" class="btn-qty-minus" onclick="ajustarCantidad(-1)">
+                                <i class="bi bi-dash-lg"></i>
+                            </button>
+                            <input type="number" name="amount" id="inputCantidad" class="form-control-custom text-center" min="1" value="1" required style="border-radius: 0; border-left: none; border-right: none; -moz-appearance: textfield;">
+                            <button type="button" class="btn-qty-plus" onclick="ajustarCantidad(1)">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="col-6 col-md-2">
@@ -288,7 +343,7 @@
                     <h5 class="modal-title mb-0" id="modalFacturaLabel">
                         <i class="bi bi-receipt"></i> Generar Factura
                     </h5>
-                    <div class="small opacity-75">Total mesa: $ {{ number_format($total, 0, ',', '.') }}</div>
+                    <div class="small opacity-75">Total {{ $mesa->is_domicilio ? 'domicilio' : 'mesa' }}: $ {{ number_format($total, 0, ',', '.') }}</div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -396,10 +451,10 @@
     </div>
 </div>
 
-<!-- Productos en la Mesa -->
+<!-- Productos en la Mesa/Domicilio -->
 <div class="card-custom fade-in">
     <div class="card-header-custom">
-        <h2><i class="bi bi-cart3"></i> Productos en la Mesa</h2>
+        <h2><i class="bi bi-cart3"></i> Productos {{ $mesa->is_domicilio ? 'del Domicilio' : 'en la Mesa' }}</h2>
     </div>
     <div class="card-body-custom">
         @if($productosTable->count() > 0)
@@ -522,8 +577,8 @@
                 <h5 class="mt-3 mb-1" style="font-weight: 700;">¡Factura Generada!</h5>
                 <p class="text-muted mb-4" style="font-size: 0.9rem;">La factura se abrió en una nueva pestaña.</p>
                 <button type="button" class="btn-success-custom w-100 justify-content-center"
-                    onclick="window.location.reload()">
-                    <i class="bi bi-arrow-clockwise"></i> Nueva Mesa
+                    onclick="window.location.href='{{ $mesa->is_domicilio ? route('domicilios.index') : '/' }}'">
+                    <i class="bi bi-arrow-clockwise"></i> {{ $mesa->is_domicilio ? 'Volver a Domicilios' : 'Gestionar Mesas' }}
                 </button>
             </div>
         </div>
@@ -568,6 +623,15 @@
 
 @section('scripts')
 <script>
+// Ajustar cantidad con botones +/-
+function ajustarCantidad(delta) {
+    var input = document.getElementById('inputCantidad');
+    var val = parseInt(input.value) || 1;
+    val += delta;
+    if (val < 1) val = 1;
+    input.value = val;
+}
+
 // Tiempo en mesa
 (function() {
     var el = document.getElementById('tiempo-en-mesa');

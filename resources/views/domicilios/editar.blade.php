@@ -5,7 +5,7 @@
 @section('content')
 
 <div class="text-center mb-4 fade-in">
-    <h1 class="page-title"><i class="bi bi-truck"></i> Editar Domicilio - {{ $domicilio->name }}</h1>
+    <h1 class="page-title"><i class="bi bi-truck"></i> Editar Domicilio</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -45,7 +45,7 @@
                         <button type="submit" class="btn-success-custom flex-fill justify-content-center">
                             <i class="bi bi-check-lg"></i> Guardar Cambios
                         </button>
-                        <a href="{{ route('mesa.show', $domicilio->id) }}" class="btn-secondary-custom justify-content-center">
+                        <a href="{{ route('mesa.show', $domicilio->table_id) }}" class="btn-secondary-custom justify-content-center">
                             <i class="bi bi-arrow-left"></i> Volver
                         </a>
                     </div>

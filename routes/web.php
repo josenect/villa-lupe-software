@@ -89,6 +89,10 @@ Route::middleware(['role'])->group(function () {
         // Eliminar producto de mesa (solo admin)
         Route::get('mesa/{mesa_id}/productos/{id}', [TransactionsTableController::class, 'delete'])->name('delete.product.table');
         
+        // Domicilios (solo admin: cancelar e historial)
+        Route::post('domicilios/{id}/cancelar', [DomicilioController::class, 'cancelar'])->name('domicilios.cancelar');
+        Route::get('domicilios/historial', [DomicilioController::class, 'historial'])->name('domicilios.historial');
+
         // Generar factura (solo admin)
         Route::get('/generar-factura/{mesaId}', [FacturaController::class, 'generarFactura']);
         Route::get('/generar-factura-parcial/{mesaId}', [FacturaController::class, 'generarFacturaParcial'])->name('factura.generarParcial');
