@@ -6,6 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <title>@yield('title', \App\Models\Setting::get('restaurante_nombre', 'Villa Lupe'))</title>
+
+    @php $faviconLogo = \App\Models\Setting::get('restaurante_logo', ''); @endphp
+    @if($faviconLogo)
+        <link rel="icon" type="image/png" href="{{ asset('storage/' . $faviconLogo) }}">
+        <link rel="apple-touch-icon" href="{{ asset('storage/' . $faviconLogo) }}">
+    @endif
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
